@@ -1,0 +1,59 @@
+{
+  "organization": {
+    "name": "Percy Street Lab"
+  },
+  "network": {
+    "name": "Studio Lab",
+    "type": "combined",
+    "time_zone": "Europe/London",
+    "tags": ["home", "lab"],
+    "notes": "Auto-created by Python SDK"
+  },
+  "devices": [
+    {
+      "serial": "Q2QN-CHDD-MQ24",
+      "type": "MX",
+      "name": "Studio-MX65"
+    },
+    {
+      "serial": "Q2JV-FTGL-UWU5",
+      "type": "MV",
+      "name": "Studio-Camera"
+    },
+    {
+      "serial": "Q2VY-69FH-2N6B",
+      "type": "MG",
+      "name": "Studio-Cellular"
+    },
+    {
+      "serial": "Q3CA-NGG7-PUWM",
+      "type": "MT",
+      "name": "Studio-MT10"
+    },
+    {
+      "serial": "Q3CE-FKEU-39PL",
+      "type": "MT",
+      "name": "Studio-MT11"
+    },
+    {
+      "serial": "Q3CB-3E8E-Z237",
+      "type": "MT",
+      "name": "Studio-MT12"
+    },
+    {
+      "serial": "Q3CG-QW5B-987T",
+      "type": "MT",
+      "name": "Studio-MT14"
+    },
+    {
+      "serial": "Q3CH-WMME-ACJY",
+      "type": "MT",
+      "name": "Studio-MT30"
+    },
+    {
+      "serial": "Q3CC-BEXL-HEFG",
+      "type": "MT",
+      "name": "Studio-MT20"
+    }
+  ]
+}

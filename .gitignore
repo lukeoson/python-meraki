@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+.env/
+.uv/
+
+# dotenv files
+.env.*
+.envrc
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# local settings
+*.local.yaml
+*.local.json
+
+secrets.yaml
