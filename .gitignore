@@ -15,6 +15,7 @@ __pycache__/
 
 # Logs
 *.log
+logs/
 
 # macOS
 .DS_Store
@@ -44,3 +45,26 @@ dist/
 *.local.json
 
 secrets.yaml
+
+# Virtual environments
+.venv/
+.uv/
+
+# dotenv and secrets
+.env
+.env.*
+.envrc
+
+# IDEs
+.vscode/
+.DS_Store
+
+# Build and Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Lockfile? ✅ Keep it
+!uv.lock
