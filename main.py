@@ -14,9 +14,6 @@ from meraki_sdk.devices import (
 )
 from meraki_sdk.logging_config import setup_logging
 
-setup_logging()
-logger = logging.getLogger(__name__)
-
 def get_next_org_name_by_prefix(items, base_name):
     pattern = re.compile(rf"{re.escape(base_name)} (\d+)")
     numbers = [
@@ -43,6 +40,11 @@ def main():
     org_base_name = config["baseNames"]["organization"]
     net_base_name = config["baseNames"]["network"]
     org_name, _ = get_next_org_name_by_prefix(orgs, org_base_name)
+
+    # Set up logging with dynamic log filename
+    log_filename = f"py-meraki-{org_name.lower().replace(' ', '')}.log"
+    setup_logging(log_filename)
+    logger = logging.getLogger(__name__)
 
     # Create new org
     new_org = dashboard.organizations.createOrganization(name=org_name)
@@ -76,8 +78,15 @@ def main():
     claim_devices(dashboard, network_id, serials)
     set_device_address(dashboard, serials)
 
+    device_summary = "\n".join([
+        f"     - {d['serial']} ({d['type']})" for d in config["devices"]
+    ])
+
     logger.info("🏁 Workflow complete.")
+    logger.info("\n📊 Summary of this deployment:")
+    logger.info(f"  1. Organization '{org_name}' (ID: {org_id}) created.")
+    logger.info(f"  2. Network '{config['network']['name']}' (ID: {network_id}) added to org.")
+    logger.info(f"  3. Devices claimed:\n{device_summary}")
 
 if __name__ == "__main__":
     main()
-

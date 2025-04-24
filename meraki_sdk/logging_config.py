@@ -2,12 +2,14 @@
 import logging
 import coloredlogs
 import os
+from pathlib import Path
 
-def setup_logging():
+def setup_logging(log_name: str = "python_meraki.log"):
     """Configure colorized console logging + persistent file logging."""
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
-    log_file_path = os.path.join(log_dir, "python_meraki.log")
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+
+    log_file_path = log_dir / log_name
 
     # Base config (used by file handler)
     logging.basicConfig(
