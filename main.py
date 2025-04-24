@@ -56,17 +56,26 @@ def main():
     network_id = ensure_network(dashboard, org_id, config["network"])
     logger.info(f"✅ Created network {config['network']['name']} ({network_id})")
 
-    # Remove devices from previous network
+    # Remove devices from previous network and clean up old org
     if args.destroy:
         previous_org = get_previous_org(orgs, org_base_name)
         if previous_org:
             previous_org_id = previous_org["id"]
+            previous_org_name = previous_org["name"]
             previous_net = get_next_network_by_prefix(dashboard, previous_org_id, config["baseNames"]["network"])
+
             if previous_net:
                 old_network_id = previous_net["id"]
                 remove_devices_from_network(dashboard, old_network_id, config["devices"])
-            else:
-                logger.warning(f"⚠️  No previous {net_base_name} network found in previous org.")
+                dashboard.networks.deleteNetwork(old_network_id)
+                logger.info(f"🗑️ Deleted old network '{previous_net['name']}' (ID: {old_network_id})")
+
+            # Rename org to DEAD pattern using its original number
+            match = re.search(r"(\d{3})$", previous_org_name)
+            org_suffix = match.group(1) if match else "UNKNOWN"
+            dead_name = f"DEAD - Delete old {org_suffix}"
+            dashboard.organizations.updateOrganization(previous_org_id, name=dead_name)
+            logger.info(f"⚰️ Renamed previous org '{previous_org_name}' → '{dead_name}'")
         else:
             logger.warning(f"⚠️  No valid previous {org_base_name} org to remove devices from.")
 
