@@ -1,9 +1,13 @@
 {
+  "baseNames": {
+    "organization": "Percy Street",
+    "network": "Studio Lab"
+  },
   "organization": {
-    "name": "Percy Street Lab"
+    "tags": ["python-sdk", "lab"],
+    "notes": "Auto-created by Python SDK"
   },
   "network": {
-    "name": "Studio Lab",
     "type": "combined",
     "time_zone": "Europe/London",
     "tags": ["python-sdk", "lab"],
