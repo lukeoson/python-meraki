@@ -11,6 +11,8 @@ from meraki_sdk.devices import (
     remove_devices_from_network,
     claim_devices,
     set_device_address,
+    set_device_names,
+    generate_device_names
 )
 from meraki_sdk.logging_config import setup_logging
 
@@ -86,12 +88,13 @@ def main():
     serials = [d["serial"] for d in config["devices"]]
     claim_devices(dashboard, network_id, serials)
     set_device_address(dashboard, serials)
+    set_device_names(dashboard, network_id, config)
 
     device_summary = "\n".join([
         f"     - {d['serial']} ({d['type']})" for d in config["devices"]
     ])
 
-    logger.info("🏁 Workflow complete.")
+    logger.info("\n🏁 Workflow complete.")
     logger.info("\n📊 Summary of this deployment:")
     logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
     logger.info(f"  2. 🌐 Network '{config['network']['name']}' (ID: {network_id}) added to org.")

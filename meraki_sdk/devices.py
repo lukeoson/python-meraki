@@ -49,3 +49,42 @@ def set_device_address(dashboard, serials, address="18 Percy Street, London, W1T
         except Exception as e:
             logger.error(f"❌ Failed to set address for {serial}: {e}")
 
+def generate_device_names(devices, naming_config):
+    """
+    Generate structured names for Meraki devices using a naming convention.
+    Names are of the format CITY-BUILDING-ROOM-FUNCTION-TYPE-SEQ.
+    Sequence is per device type (e.g., MX-01, MX-02).
+    """
+    type_counters = {}
+    named_devices = []
+
+    for device in devices:
+        device_type = device["type"].upper()
+        type_counters[device_type] = type_counters.get(device_type, 0) + 1
+        seq = f"{type_counters[device_type]:02d}"
+
+        name_parts = [
+            naming_config["city"],
+            naming_config["building"],
+            naming_config["room"],
+            naming_config["function"],
+            device_type,
+            seq
+        ]
+
+        device_name = "-".join(name_parts).upper()
+        named_devices.append({"serial": device["serial"], "name": device_name})
+
+    return named_devices
+
+
+def set_device_names(dashboard, network_id, named_devices):
+    """
+    Set device names in the Meraki dashboard based on the generated names.
+    """
+    for device in named_devices:
+        dashboard.devices.updateDevice(
+            device["serial"],
+            name=device["name"]
+        )
+
