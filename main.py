@@ -93,9 +93,11 @@ def main():
 
     logger.info("🏁 Workflow complete.")
     logger.info("\n📊 Summary of this deployment:")
-    logger.info(f"  1. Organization '{org_name}' (ID: {org_id}) created.")
-    logger.info(f"  2. Network '{config['network']['name']}' (ID: {network_id}) added to org.")
-    logger.info(f"  3. Devices claimed:\n{device_summary}")
+    logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
+    logger.info(f"  2. 🌐 Network '{config['network']['name']}' (ID: {network_id}) added to org.")
+    logger.info(f"  3. 📦 Devices claimed:\n{device_summary}")
+    logger.info(f"  4. ✏️ The meraki-sdk lacks: Org deletion - please manually delete {dead_name} now.")
+    logger.info(f"  5. ✏️ The meraki-sdk lacks: Vision Portal wall creation - please manually create if desired.")
 
 if __name__ == "__main__":
     main()
