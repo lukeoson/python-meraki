@@ -52,7 +52,7 @@ def set_device_address(dashboard, serials, address="18 Percy Street, London, W1T
 def generate_device_names(devices, naming_config):
     """
     Generate structured names for Meraki devices using a naming convention.
-    Names are of the format CITY-BUILDING-ROOM-FUNCTION-TYPE-SEQ.
+    Names are based on the provided template, such as {city}-{building}-{room}-{function}-{type}.
     Sequence is per device type (e.g., MX-01, MX-02).
     """
     type_counters = {}
@@ -63,16 +63,17 @@ def generate_device_names(devices, naming_config):
         type_counters[device_type] = type_counters.get(device_type, 0) + 1
         seq = f"{type_counters[device_type]:02d}"
 
-        name_parts = [
-            naming_config["city"],
-            naming_config["building"],
-            naming_config["room"],
-            naming_config["function"],
-            device_type,
-            seq
-        ]
+        # Replace the placeholders in the template
+        device_name = naming_config["template"].format(
+            city=naming_config["city"],
+            building=naming_config["building"],
+            room=naming_config["room"],
+            function=naming_config["function"],
+            type=device_type,
+            seq=seq
+        )
 
-        device_name = "-".join(name_parts).upper()
+        # Store the generated device name with the serial
         named_devices.append({"serial": device["serial"], "name": device_name})
 
     return named_devices

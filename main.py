@@ -35,6 +35,9 @@ def main():
     with open(args.config) as f:
         config = json.load(f)
 
+    # Debugging step: Log the config to make sure naming is loaded
+    logger.info(f"Loaded config: {json.dumps(config, indent=2)}")  # This will show the full config structure
+
     dashboard = get_dashboard_session()
 
     # Fetch current orgs and determine next org name
@@ -88,6 +91,10 @@ def main():
     serials = [d["serial"] for d in config["devices"]]
     claim_devices(dashboard, network_id, serials)
     set_device_address(dashboard, serials)
+
+    logger.info(f"Naming config: {config['naming']}")
+
+    # Set device names
     set_device_names(dashboard, network_id, generate_device_names(config["devices"], config["naming"]))
 
     device_summary = "\n".join([
