@@ -40,12 +40,11 @@ python main.py
 ```
 
 ### Options
-
 	•	--config: Specify a custom config file (default: config.json)
 	•	--destroy: Remove devices from the previous network before reuse
 
 ## Structure
-
+```zsh
 .
 ├── config.json               # Device and naming config
 ├── main.py                  # Entry point
@@ -58,6 +57,7 @@ python main.py
 ├── logs/                    # Deployment logs
 ├── pyproject.toml           # Dependency metadata
 └── uv.lock                  # Frozen lockfile
+```
 
 ## Roadmap
 
