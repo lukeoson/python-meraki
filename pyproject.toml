@@ -1,0 +1,16 @@
+[project]
+name = "python-meraki"
+version = "0.1.0"
+description = "Automated Meraki Python-SDK network deployment and device management workflows."
+readme = "README.md"
+authors = [
+  { name = "Lukeoson" }
+]
+requires-python = ">=3.10"
+
+[project.dependencies]
+meraki = "*"
+coloredlogs = "*"
+
+[tool.uv]
+# Optional uv config block (can stay empty for now)

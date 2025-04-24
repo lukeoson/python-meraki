@@ -16,23 +16,15 @@ def get_next_sequence_name(items, base_name):
     return f"{base_name} {next_seq:03d}", next_seq
 
 
-def get_previous_percy_org(orgs):
+def get_previous_org(orgs, org_base_name):
     """
-    Return the most recent Percy Street org before the newly created one.
-    If only one exists, assume that is the previous.
+    Return the most recent org matching the base name before the newly created one.
+    Expects names like 'Percy Street 001', 'Percy Street 002', etc.
     """
-    percy_orgs = [
+    matching_orgs = [
         o for o in orgs
-        if o["name"].startswith("Percy Street") and o["name"].split()[-1].isdigit()
+        if o["name"].startswith(org_base_name) and o["name"].split()[-1].isdigit()
     ]
-    percy_orgs_sorted = sorted(percy_orgs, key=lambda o: int(o["name"].split()[-1]))
+    sorted_orgs = sorted(matching_orgs, key=lambda o: int(o["name"].split()[-1]))
 
-    if percy_orgs_sorted:
-        return percy_orgs_sorted[-1]
-    return None
-
-
-
-
-
-
+    return sorted_orgs[-1] if sorted_orgs else None
