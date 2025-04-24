@@ -6,7 +6,7 @@
     "name": "Studio Lab",
     "type": "combined",
     "time_zone": "Europe/London",
-    "tags": ["home", "lab"],
+    "tags": ["python-sdk", "lab"],
     "notes": "Auto-created by Python SDK"
   },
   "devices": [

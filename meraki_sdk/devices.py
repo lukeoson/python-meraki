@@ -36,4 +36,16 @@ def remove_devices_from_network(dashboard, network_id, devices):
         except Exception as e:
             logger.error(f"❌ Unexpected error removing {serial}: {e}")
 
+def set_device_address(dashboard, serials, address="18 Percy Street, London, W1T 1DX"):
+    logger.info(f"📍 Setting address for all devices to: {address}")
+    for serial in serials:
+        try:
+            dashboard.devices.updateDevice(
+                serial=serial,
+                address=address,
+                moveMapMarker=True
+            )
+            logger.info(f"✅ Set address for {serial}")
+        except Exception as e:
+            logger.error(f"❌ Failed to set address for {serial}: {e}")
 

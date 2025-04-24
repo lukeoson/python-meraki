@@ -10,9 +10,11 @@ from meraki_sdk.network import ensure_network, get_studio_lab_network
 from meraki_sdk.devices import (
     remove_devices_from_network,
     claim_devices,
+    set_device_address,
 )
+from meraki_sdk.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
+setup_logging()
 logger = logging.getLogger(__name__)
 
 def get_next_sequence_name(items, base_name):
@@ -70,6 +72,7 @@ def main():
     # Claim devices to new network
     serials = [d["serial"] for d in config["devices"]]
     claim_devices(dashboard, network_id, serials)
+    set_device_address(dashboard, serials)
 
     ## Optional: bind sensors to MV72 - didnt work tried for hours. LR
     #mv_serial = next((d["serial"] for d in config["devices"] if d["type"] == "MV"), None)
