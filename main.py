@@ -88,7 +88,7 @@ def main():
     serials = [d["serial"] for d in config["devices"]]
     claim_devices(dashboard, network_id, serials)
     set_device_address(dashboard, serials)
-    set_device_names(dashboard, network_id, config)
+    set_device_names(dashboard, network_id, generate_device_names(config["devices"], config["naming"]))
 
     device_summary = "\n".join([
         f"     - {d['serial']} ({d['type']})" for d in config["devices"]
