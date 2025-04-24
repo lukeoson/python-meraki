@@ -3,6 +3,13 @@
     "organization": "Percy Street",
     "network": "Studio Lab"
   },
+  "naming": {
+    "city": "lon",
+    "building": "percy",
+    "room": "studio",
+    "function": "lab",
+    "template": "{city}-{building}-{room}-{function}-{type}"
+  },
   "organization": {
     "tags": ["python-sdk", "lab"],
     "notes": "Auto-created by Python SDK"

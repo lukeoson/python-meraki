@@ -35,9 +35,6 @@ def main():
     with open(args.config) as f:
         config = json.load(f)
 
-    # Debugging step: Log the config to make sure naming is loaded
-    logger.info(f"Loaded config: {json.dumps(config, indent=2)}")  # This will show the full config structure
-
     dashboard = get_dashboard_session()
 
     # Fetch current orgs and determine next org name
@@ -50,6 +47,9 @@ def main():
     log_filename = f"py-meraki-{org_name.lower().replace(' ', '')}.log"
     setup_logging(log_filename)
     logger = logging.getLogger(__name__)
+
+    # Debugging step: Log the config to make sure naming is loaded <<<<<-------
+    logger.info(f"Loaded config: {json.dumps(config, indent=2)}")  # This will show the full config structure
 
     # Create new org
     new_org = dashboard.organizations.createOrganization(name=org_name)
@@ -85,7 +85,7 @@ def main():
             logger.warning(f"⚠️  No valid previous {org_base_name} org to remove devices from.")
 
     # Prompt for manual unclaiming
-    input("🔓 Not always needed. But please manually unclaim the devices from the previous org, then press Enter to continue...")
+    #input("🔓 Not always needed. But please manually unclaim the devices from the previous org, then press Enter to continue...")
 
     # Claim devices to new network
     serials = [d["serial"] for d in config["devices"]]
@@ -94,20 +94,24 @@ def main():
 
     logger.info(f"Naming config: {config['naming']}")
 
+    # Generate device names
+    named_devices = generate_device_names(config["devices"], config["naming"])
+
     # Set device names
-    set_device_names(dashboard, network_id, generate_device_names(config["devices"], config["naming"]))
+    set_device_names(dashboard, network_id, named_devices)
 
     device_summary = "\n".join([
         f"     - {d['serial']} ({d['type']})" for d in config["devices"]
     ])
 
-    logger.info("\n🏁 Workflow complete.")
-    logger.info("\n📊 Summary of this deployment:")
+    logger.info("🏁 Workflow complete.")
+    logger.info("📊 Summary of this deployment:")
     logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
     logger.info(f"  2. 🌐 Network '{config['network']['name']}' (ID: {network_id}) added to org.")
     logger.info(f"  3. 📦 Devices claimed:\n{device_summary}")
     logger.info(f"  4. ✏️ The meraki-sdk lacks: Org deletion - please manually delete {dead_name} now.")
     logger.info(f"  5. ✏️ The meraki-sdk lacks: Vision Portal wall creation - please manually create if desired.")
+    logger.info(f"  6. 🎩 Devices have been renamed to: {', '.join([d['name'] for d in named_devices])}")
 
 if __name__ == "__main__":
     main()
