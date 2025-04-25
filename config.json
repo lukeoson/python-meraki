@@ -66,5 +66,12 @@
       "type": "MT",
       "name": "Studio-MT20"
     }
-  ]
+  ],
+  "vlan": {
+    "id": 99,
+    "name": "MGMT",
+    "subnet": "10.99.1.0/24",
+    "gatewayIp": "10.99.1.1",
+    "tag": "mgmt"
+  }
 }

@@ -7,7 +7,7 @@ import re
 from meraki_sdk.auth import get_dashboard_session
 from meraki_sdk.org import get_previous_org
 from meraki_sdk.network import ensure_network, get_next_network_by_prefix
-from meraki_sdk.devices import (
+from meraki_sdk.device import (
     remove_devices_from_network,
     claim_devices,
     set_device_address,
@@ -15,6 +15,7 @@ from meraki_sdk.devices import (
     generate_device_names
 )
 from meraki_sdk.logging_config import setup_logging
+from meraki_sdk.devices.mx import apply_mx_configurations
 
 def get_next_org_name_by_prefix(items, base_name):
     pattern = re.compile(rf"{re.escape(base_name)} (\d+)")
@@ -103,6 +104,9 @@ def main():
     device_summary = "\n".join([
         f"     - {d['serial']} ({d['type']})" for d in config["devices"]
     ])
+
+    # After claiming and renaming the MX appliance
+    apply_mx_configurations(dashboard, network_id, config)
 
     logger.info("🏁 Workflow complete.")
     logger.info("📊 Summary of this deployment:")
