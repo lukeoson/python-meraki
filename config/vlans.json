@@ -1,0 +1,48 @@
+[
+    {
+      "id": 10,
+      "name": "MGMT",
+      "subnet": "10.10.10.0/24",
+      "gatewayIp": "10.10.10.1",
+      "dhcpHandling": "Run a DHCP server",
+      "dnsNameservers": "upstream_dns",
+      "dhcpLeaseTime": "12 hours",
+      "reservedIpRanges": [
+        {
+          "start": "10.10.10.2",
+          "end": "10.10.10.99",
+          "comment": "Reserved for future use"
+        }
+      ],
+      "fixedIpAssignments": {
+        "00:11:22:33:44:55": {
+          "ip": "10.10.10.200",
+          "name": "fake device",
+          "tags": ["MGMT", "static"]
+        }
+      }
+    },
+    {
+        "id": 20,
+        "name": "Internal",
+        "subnet": "10.10.20.0/24",
+        "gatewayIp": "10.10.20.1",
+        "dhcpHandling": "Run a DHCP server",
+        "dnsNameservers": "upstream_dns",
+        "dhcpLeaseTime": "12 hours",
+        "reservedIpRanges": [
+          {
+            "start": "10.10.20.2",
+            "end": "10.10.20.99",
+            "comment": "Reserved for servers"
+          }
+        ],
+        "fixedIpAssignments": {
+          "00:11:22:33:44:55": {
+            "ip": "10.10.20.200",
+            "name": "fake device",
+            "tags": ["Internal", "static"]
+          }
+        }
+      }
+  ]

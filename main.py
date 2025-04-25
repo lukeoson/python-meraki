@@ -16,6 +16,7 @@ from meraki_sdk.device import (
 )
 from meraki_sdk.logging_config import setup_logging
 from meraki_sdk.devices.mx import apply_mx_configurations
+from config_loader import load_all_configs
 
 def get_next_org_name_by_prefix(items, base_name):
     pattern = re.compile(rf"{re.escape(base_name)} (\d+)")
@@ -28,20 +29,19 @@ def get_next_org_name_by_prefix(items, base_name):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="config.json", help="Config file path")
     parser.add_argument("--api-key", default=os.getenv("MERAKI_API_KEY"), help="Meraki API key")
     parser.add_argument("--destroy", action="store_true", help="Remove devices from old network")
     args = parser.parse_args()
 
-    with open(args.config) as f:
-        config = json.load(f)
+    # Load configuration files
+    config = load_all_configs()
 
     dashboard = get_dashboard_session()
 
     # Fetch current orgs and determine next org name
     orgs = dashboard.organizations.getOrganizations()
-    org_base_name = config["baseNames"]["organization"]
-    net_base_name = config["baseNames"]["network"]
+    org_base_name = config["base"]["baseNames"]["organization"]
+    net_base_name = config["base"]["baseNames"]["network"]
     org_name, _ = get_next_org_name_by_prefix(orgs, org_base_name)
 
     # Set up logging with dynamic log filename
@@ -49,7 +49,7 @@ def main():
     setup_logging(log_filename)
     logger = logging.getLogger(__name__)
 
-    # Debugging step: Log the config to make sure naming is loaded <<<<<-------
+    # Debugging step: Log the config to make sure naming is loaded <<<<<---------------------------------------------------------
     logger.info(f"Loaded config: {json.dumps(config, indent=2)}")  # This will show the full config structure
 
     # Create new org
@@ -58,9 +58,9 @@ def main():
     logger.info(f"✅ Created organization {org_name} ({org_id})")
 
     # Create new network
-    config["network"]["name"] = f"{net_base_name} {org_name.split()[-1]}"
-    network_id = ensure_network(dashboard, org_id, config["network"])
-    logger.info(f"✅ Created network {config['network']['name']} ({network_id})")
+    config["base"]["network"]["name"] = f"{net_base_name} {org_name.split()[-1]}"
+    network_id = ensure_network(dashboard, org_id, config["base"]["network"])
+    logger.info(f"✅ Created network {config['base']['network']['name']} ({network_id})")
 
     # Remove devices from previous network and clean up old org
     if args.destroy:
@@ -68,11 +68,11 @@ def main():
         if previous_org:
             previous_org_id = previous_org["id"]
             previous_org_name = previous_org["name"]
-            previous_net = get_next_network_by_prefix(dashboard, previous_org_id, config["baseNames"]["network"])
+            previous_net = get_next_network_by_prefix(dashboard, previous_org_id, config["base"]["baseNames"]["network"])
 
             if previous_net:
                 old_network_id = previous_net["id"]
-                remove_devices_from_network(dashboard, old_network_id, config["devices"])
+                remove_devices_from_network(dashboard, old_network_id, config["devices"]["devices"])
                 dashboard.networks.deleteNetwork(old_network_id)
                 logger.info(f"🗑️ Deleted old network '{previous_net['name']}' (ID: {old_network_id})")
 
@@ -89,20 +89,23 @@ def main():
     #input("🔓 Not always needed. But please manually unclaim the devices from the previous org, then press Enter to continue...")
 
     # Claim devices to new network
-    serials = [d["serial"] for d in config["devices"]]
+    serials = [d["serial"] for d in config["devices"]["devices"]]
     claim_devices(dashboard, network_id, serials)
     set_device_address(dashboard, serials)
 
-    logger.info(f"Naming config: {config['naming']}")
+    logger.info(f"Naming config: {config['base']['naming']}")
 
     # Generate device names
-    named_devices = generate_device_names(config["devices"], config["naming"])
+    named_devices = generate_device_names(
+    config["devices"]["devices"],  # the device list
+    config["base"]["naming"]    # the naming template
+)
 
     # Set device names
     set_device_names(dashboard, network_id, named_devices)
 
     device_summary = "\n".join([
-        f"     - {d['serial']} ({d['type']})" for d in config["devices"]
+        f"     - {d['serial']} ({d['type']})" for d in config["devices"]["devices"]
     ])
 
     # After claiming and renaming the MX appliance
@@ -111,7 +114,7 @@ def main():
     logger.info("🏁 Workflow complete.")
     logger.info("📊 Summary of this deployment:")
     logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
-    logger.info(f"  2. 🌐 Network '{config['network']['name']}' (ID: {network_id}) added to org.")
+    logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' (ID: {network_id}) added to org.")
     logger.info(f"  3. 📦 Devices claimed:\n{device_summary}")
     logger.info(f"  4. ✏️ The meraki-sdk lacks: Org deletion - please manually delete {dead_name} now.")
     logger.info(f"  5. ✏️ The meraki-sdk lacks: Vision Portal wall creation - please manually create if desired.")
