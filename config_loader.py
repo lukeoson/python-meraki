@@ -12,7 +12,8 @@ def load_all_configs():
     return {
         "base": load_config_file("base.json"),
         "vlans": load_config_file("vlans.json"),
-        #"firewall": load_config_file("firewall.json"),
         "devices": load_config_file("devices.json"),
-        #"dhcp": load_config_file("dhcp.json")
+        "mx_ports": load_config_file("ports/mx_ports.json"), 
+        # "firewall": load_config_file("firewall.json"),
+        # "dhcp": load_config_file("dhcp.json")
     }
