@@ -41,6 +41,15 @@ def configure_mx_vlans(dashboard, network_id, config):
         exclusion_overrides = load_exclusion_overrides()
         fixed_assignments_data = load_fixed_assignments()
 
+        from meraki_sdk.network_constructs.vlans.fixed_assignments import load_fixed_assignments, get_vlan_fixed_assignments
+
+        fixed_assignments_data = load_fixed_assignments()
+
+        for vlan in vlans_config:
+            vlan_fixed_assignments = get_vlan_fixed_assignments(vlan, fixed_assignments_data)
+            if vlan_fixed_assignments:
+                vlan["fixedIpAssignments"] = vlan_fixed_assignments
+
         for vlan in config["vlans"]:
             vlan_id = str(vlan["id"])
             name = vlan["name"]
