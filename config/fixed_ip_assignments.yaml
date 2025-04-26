@@ -1,3 +1,17 @@
+MGMT:
+  00:11:22:33:44:55:
+    ip: 10.10.10.200
+    name: Fake Device 1
+    tags:
+      - MGMT
+      - static
+  00:11:22:33:44:66:
+    ip: 10.10.10.201
+    name: Fake Device 2
+    tags:
+      - MGMT
+      - static
+
 Internal:
   00:22:33:44:55:66:
     ip: 10.10.20.200
