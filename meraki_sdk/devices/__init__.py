@@ -1,7 +1,7 @@
 # meraki_sdk/devices/__init__.py
 
 import logging
-from .mx_vlans import apply_mx_vlans
+from ..network_constructs.vlans.mx import configure_mx_vlans
 from .mx_ports import configure_mx_ports
 from ..device import (
     set_device_address,
@@ -39,7 +39,7 @@ def setup_devices(
 
     if configure_vlans:
         logger.info("🌐 Configuring MX VLANs...")
-        apply_mx_vlans(dashboard, network_id, config)
+        configure_mx_vlans(dashboard, network_id, config)
 
     if configure_ports:
         logger.info("🔌 Configuring MX ports...")

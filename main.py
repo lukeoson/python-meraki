@@ -15,7 +15,8 @@ from meraki_sdk.device import (
     set_device_names,
     generate_device_names
 )
-from meraki_sdk.devices import apply_mx_vlans, configure_mx_ports, setup_devices
+from meraki_sdk.network_constructs.vlans import configure_mx_vlans
+from meraki_sdk.devices import configure_mx_ports, setup_devices
 from meraki_sdk.logging_config import setup_logging
 from config_loader import load_all_configs
 
