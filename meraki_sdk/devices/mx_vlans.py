@@ -1,4 +1,4 @@
-# meraki_sdk/devices/mx.py
+# meraki_sdk/devices/mx_vlans.py
 import logging
 import json
 from meraki.exceptions import APIError
@@ -26,9 +26,9 @@ def ensure_vlans_enabled(dashboard, network_id):
     except Exception as e:
         logger.error(f"❌ Unexpected error while managing VLANs: {e}")
 
-def apply_mx_configurations(dashboard, network_id, config):
+def apply_mx_vlans(dashboard, network_id, config):
     try:
-        logger.info("🧠 Starting MX appliance configuration...")
+        logger.info("🧠 Starting MX VLAN configuration...")
         ensure_vlans_enabled(dashboard, network_id)
 
         for vlan in config["vlans"]:
@@ -85,7 +85,7 @@ def apply_mx_configurations(dashboard, network_id, config):
             except Exception as e:
                 logger.error(f"❌ Unexpected error while updating VLAN {vlan_id}: {e}")
 
-        logger.info("✅ MX appliance VLAN configuration applied successfully.")
+        logger.info("✅ MX VLAN configuration applied successfully.")
 
     except Exception as e:
-        logger.error(f"❌ Failed to apply MX configurations: {e}")
+        logger.error(f"❌ Failed to apply MX VLAN configurations: {e}")

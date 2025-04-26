@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+from collections import Counter
 
 from meraki_sdk.auth import get_dashboard_session
 from meraki_sdk.org import get_previous_org
@@ -14,8 +15,8 @@ from meraki_sdk.device import (
     set_device_names,
     generate_device_names
 )
+from meraki_sdk.devices import apply_mx_vlans, configure_mx_ports, setup_devices
 from meraki_sdk.logging_config import setup_logging
-from meraki_sdk.devices.mx import apply_mx_configurations
 from config_loader import load_all_configs
 
 def get_next_org_name_by_prefix(items, base_name):
@@ -49,10 +50,9 @@ def main():
     setup_logging(log_filename)
     logger = logging.getLogger(__name__)
 
-    # Debugging step: Log the config to make sure naming is loaded <<<<<---------------------------------------------------------
-    logger.info(f"Loaded config: {json.dumps(config, indent=2)}")  # This will show the full config structure
+    logger.info(f"Loaded config: {json.dumps(config, indent=2)}")
 
-    # Create new org
+    # Create new organization
     new_org = dashboard.organizations.createOrganization(name=org_name)
     org_id = new_org["id"]
     logger.info(f"✅ Created organization {org_name} ({org_id})")
@@ -76,49 +76,60 @@ def main():
                 dashboard.networks.deleteNetwork(old_network_id)
                 logger.info(f"🗑️ Deleted old network '{previous_net['name']}' (ID: {old_network_id})")
 
-            # Rename org to DEAD pattern using its original number
             match = re.search(r"(\d{3})$", previous_org_name)
             org_suffix = match.group(1) if match else "UNKNOWN"
             dead_name = f"DEAD - Delete old {org_suffix}"
             dashboard.organizations.updateOrganization(previous_org_id, name=dead_name)
             logger.info(f"⚰️ Renamed previous org '{previous_org_name}' → '{dead_name}'")
         else:
-            logger.warning(f"⚠️  No valid previous {org_base_name} org to remove devices from.")
-
-    # Prompt for manual unclaiming
-    #input("🔓 Not always needed. But please manually unclaim the devices from the previous org, then press Enter to continue...")
+            logger.warning(f"⚠️ No valid previous {org_base_name} org to remove devices from.")
 
     # Claim devices to new network
     serials = [d["serial"] for d in config["devices"]["devices"]]
     claim_devices(dashboard, network_id, serials)
-    set_device_address(dashboard, serials)
 
-    logger.info(f"Naming config: {config['base']['naming']}")
+    # 📦 NEW REFACTOR: Clean post-claim setup
+    setup_devices(dashboard, network_id, config)
 
-    # Generate device names
-    named_devices = generate_device_names(
-    config["devices"]["devices"],  # the device list
-    config["base"]["naming"]    # the naming template
-)
-
-    # Set device names
-    set_device_names(dashboard, network_id, named_devices)
-
+    # Wrap up
     device_summary = "\n".join([
         f"     - {d['serial']} ({d['type']})" for d in config["devices"]["devices"]
     ])
 
-    # After claiming and renaming the MX appliance
-    apply_mx_configurations(dashboard, network_id, config)
-
+    # Log the summary of the deployment
     logger.info("🏁 Workflow complete.")
     logger.info("📊 Summary of this deployment:")
     logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
     logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' (ID: {network_id}) added to org.")
-    logger.info(f"  3. 📦 Devices claimed:\n{device_summary}")
-    logger.info(f"  4. ✏️ The meraki-sdk lacks: Org deletion - please manually delete {dead_name} now.")
-    logger.info(f"  5. ✏️ The meraki-sdk lacks: Vision Portal wall creation - please manually create if desired.")
-    logger.info(f"  6. 🎩 Devices have been renamed to: {', '.join([d['name'] for d in named_devices])}")
+
+    # Group claimed devices by type
+    device_types = [device["type"] for device in config["devices"]["devices"]]
+    device_counter = Counter(device_types)
+
+    logger.info(f"  3. 📦 Devices claimed:")
+    for device_type, count in device_counter.items():
+        logger.info(f"     - {count}x {device_type}")
+
+    # Named devices with template
+    logger.info(f"  4. 🏷️ Devices named using template: {config['base']['naming']['template']}")
+    generated_devices = generate_device_names(
+        config["devices"]["devices"],
+        config["base"]["naming"]
+        )
+    for device in generated_devices:
+        logger.info(f"     - {device['serial']} → {device['name']}")
+
+    # VLANs
+    logger.info(f"  5. 🌐 VLANs configured: {len(config['vlans'])} VLANs applied.")
+
+    # Ports
+    logger.info(f"  6. 🔌 MX ports configured: {len(config['mx_ports']['ports'])} custom + {len(config['mx_ports'].get('defaults', {}))} defaults.")
+
+    # Manual step
+    logger.info(f"  7. ⚰️ Manual step: delete org '{dead_name}' if needed.")
+
+    # Finished
+    logger.info(f"  8. 🎩 Deployment finished successfully.")
 
 if __name__ == "__main__":
     main()

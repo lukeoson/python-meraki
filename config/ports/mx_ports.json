@@ -1,0 +1,32 @@
+{
+    "defaults": {
+      "name": "Internal",  
+      "enabled": true,
+      "type": "access",
+      "vlan": 20,
+      "dropUntaggedTraffic": false,
+      "poeEnabled": false,
+      "allowedVlans": "all",
+      "accessPolicy": "Open"
+    },
+    "ports": [
+      {
+        "portId": 1,
+        "name": "WAN 1",
+        "type": "wan",
+        "enabled": true
+      },
+      {
+        "portId": 11,
+        "device-role": "camera",
+        "vlan": 10,
+        "poeEnabled": true
+      },
+      {
+        "portId": 12,
+        "device-role": "cellular",
+        "vlan": 10,
+        "poeEnabled": true
+      }
+    ]
+  }
