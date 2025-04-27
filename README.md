@@ -2,71 +2,106 @@
 
 Automated Cisco Meraki network provisioning using the Python SDK.
 
-This tool creates new Meraki organizations and networks, assigns devices, and sets default configurations — ideal for labs or ephemeral testing setups.
+This tool creates new Meraki organizations and networks, claims devices, sets VLANs, configures MX ports, static routes, and produces full deployment logs — ideal for lab or ephemeral testing environments.
 
 ---
 
 ## 🚀 Features
 
-- ✅ Creates new orgs and networks with incrementing names
-- 🔐 Prompts for manual unclaiming of devices before reuse
-- 🧹 Optionally removes devices from previous networks (`--destroy`)
-- 📍 Sets addresses and places devices on the map
-- 📦 Logs each deployment with a custom filename
-- ⚙️ Uses `pyproject.toml` + `uv` for dependency management
+- 🏢 Creates new Meraki organizations and networks with incrementing names
+- 📦 Claims and names devices using a structured naming convention
+- 🌐 Configures VLANs, DHCP, and reserved IP assignments
+- 🔌 Configures MX ports after VLANs are enabled
+- 🛣️ Creates static routes
+- 📍 Sets device addresses and places devices on maps
+- 🧹 Supports device removal from old networks (`--destroy`)
+- 📝 Saves full deployment summaries (named after the deployment number)
+- ⚙️ Modern dependency management using `pyproject.toml` + `uv`
+- 🧩 Modular code structure, fully separated between devices and logical network constructs
 
 ---
 
-## 🛠️ Usage
-
-### Requirements
+## 🛠️ Requirements
 
 - Python 3.10+
-- Cisco Meraki API key
-- Devices claimed to your dashboard account
-- `uv` installed as the Python package manager
+- Cisco Meraki API Key
+- Devices already claimable via API
+- [`uv`](https://github.com/astral-sh/uv) installed (`pip install uv`)
 
-### Setup
+---
+
+## 📦 Installation
 
 ```bash
 uv venv
 source .venv/bin/activate
 uv pip install -r uv.lock
-```
 
-## Run
-```
+## 🚀 Running the Tool
+
+```zsh
 python main.py
 ```
 
 ### Options
-	•	--config: Specify a custom config file (default: config.json)
-	•	--destroy: Remove devices from the previous network before reuse
 
-## Structure
-```zsh
+## Options
+
+| Option     | Description                                      |
+|------------|--------------------------------------------------|
+| `--destroy` | Remove devices from their previous network before reuse |
+| `--config`  | (future) Load an alternate config file |
+
+## 🗂️ Project Structure
+```
 .
-├── config.json               # Device and naming config
-├── main.py                  # Entry point
-├── meraki_sdk/              # Modular SDK wrappers
+├── config/
+│   ├── base.json
+│   ├── devices.json
+│   ├── exclusion_rules.yaml
+│   ├── fixed_ip_assignments.yaml
+│   ├── ports/
+│   │   └── mx_ports.json
+│   ├── static_routes.json
+│   └── vlans.json
+├── logs/
+│   ├── custom_logs/
+│   ├── meraki_logs/
+│   └── summary_log/
+├── meraki_sdk/
 │   ├── auth.py
-│   ├── devices.py
-│   ├── network.py
+│   ├── device.py
 │   ├── org.py
-│   └── logging_config.py
-├── logs/                    # Deployment logs
-├── pyproject.toml           # Dependency metadata
-└── uv.lock                  # Frozen lockfile
+│   ├── network.py
+│   ├── logging_config.py
+│   ├── devices/
+│   │   └── setup_devices.py
+│   ├── network_constructs/
+│   │   ├── setup_network_constructs.py
+│   │   ├── vlans/
+│   │   │   ├── mx.py
+│   │   │   ├── exclusions.py
+│   │   │   └── fixed_assignments.py
+│   │   ├── ports/
+│   │   │   └── mx_ports.py
+│   │   ├── routing/
+│   │   │   └── static.py
+│   │   └── vpn.py
+├── main.py
+├── config_loader.py
+├── pyproject.toml
+├── uv.lock
+└── tests/
 ```
 
-## Roadmap
+## 🛤️ Roadmap
+- 🔥 Add Firewall rules automation
+- 📖 MkDocs site documentation
+- 🧹 Pydantic runtime validation for all config inputs
+- 🌐 Full VPN/OSPF/BGP configuration modules
+- 🧠 Smarter device exclusion and pre-checks
 
-	•	🔁 Rename old orgs to "DEAD - To be deleted"
-	•	🌍 Automate Vision Portal video wall setup
-	•	📖 Add MkDocs documentation
-	•	🧪 Add runtime validation (e.g., Pydantic)
-	•	🧩 Extend config templating
+## 🙌 Credits
 
-🙌 Credits
-
-Hacked together by Lukeoson using the Meraki Python SDK.
+Built by Lukeoson,
+with Python, the Meraki SDK. Hacky!
