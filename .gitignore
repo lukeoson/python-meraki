@@ -3,68 +3,21 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment
-.venv/
-.env/
-.env
-.uv/
-
-# dotenv files
-.env.*
-.envrc
-
 # Logs
-*.log
-logs/
+logs/custom_logs/
+logs/meraki_logs/
+logs/summary_log/
 
-# macOS
-.DS_Store
-
-# VSCode
-.vscode/
-
-# Unit test / coverage
-htmlcov/
-.tox/
-.nox/
-.coverage
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.pytest_cache/
-
-# Build artifacts
-build/
-dist/
-*.egg-info/
-
-# local settings
-*.local.yaml
-*.local.json
-
-secrets.yaml
-
-# Virtual environments
+# Environments
 .venv/
-.uv/
-
-# dotenv and secrets
+env/
 .env
-.env.*
-.envrc
+venv/
+ENV/
 
-# IDEs
-.vscode/
+# Lock and dependency files
+uv.lock
+
+# OS files
 .DS_Store
-
-# Build and Python artifacts
-__pycache__/
-*.py[cod]
-*.egg-info/
-build/
-dist/
-
-# Lockfile? ✅ Keep it
-!uv.lock
+Thumbs.db
