@@ -2,7 +2,7 @@
 
 Automated Cisco Meraki network provisioning using the Python SDK.
 
-This tool creates new Meraki organizations and networks, claims devices, sets VLANs, configures MX ports, static routes, and produces full deployment logs — ideal for lab or ephemeral testing environments.
+This tool creates new Meraki organizations and networks, claims devices, sets network configuration and produces full deployment logs — ideal for lab or ephemeral testing environments.
 
 ---
 
@@ -10,10 +10,10 @@ This tool creates new Meraki organizations and networks, claims devices, sets VL
 
 - 🏢 Creates new Meraki organizations and networks with incrementing names
 - 📦 Claims and names devices using a structured naming convention
+- 📍 Sets device addresses and places devices on maps
 - 🌐 Configures VLANs, DHCP, and reserved IP assignments
 - 🔌 Configures MX ports after VLANs are enabled
 - 🛣️ Creates static routes
-- 📍 Sets device addresses and places devices on maps
 - 🧹 Supports device removal from old networks (`--destroy`)
 - 📝 Saves full deployment summaries (named after the deployment number)
 - ⚙️ Modern dependency management using `pyproject.toml` + `uv`
@@ -36,6 +36,7 @@ This tool creates new Meraki organizations and networks, claims devices, sets VL
 uv venv
 source .venv/bin/activate
 uv pip install -r uv.lock
+```
 
 ## 🚀 Running the Tool
 
@@ -45,7 +46,6 @@ python main.py
 
 ### Options
 
-## Options
 
 | Option     | Description                                      |
 |------------|--------------------------------------------------|
@@ -97,7 +97,6 @@ python main.py
 ## 🛤️ Roadmap
 - 🔥 Add Firewall rules automation
 - 📖 MkDocs site documentation
-- 🧹 Pydantic runtime validation for all config inputs
 - 🌐 Full VPN/OSPF/BGP configuration modules
 - 🧠 Smarter device exclusion and pre-checks
 
