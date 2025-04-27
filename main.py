@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime
 from collections import Counter
 
 from meraki_sdk.auth import get_dashboard_session
@@ -15,7 +16,8 @@ from meraki_sdk.device import (
     set_device_names,
     generate_device_names
 )
-from meraki_sdk.devices import apply_mx_vlans, configure_mx_ports, setup_devices
+from meraki_sdk.network_constructs.vlans import configure_mx_vlans
+from meraki_sdk.devices import configure_mx_ports, setup_devices
 from meraki_sdk.logging_config import setup_logging
 from config_loader import load_all_configs
 
@@ -99,6 +101,9 @@ def main():
     # Log the summary of the deployment
     logger.info("🏁 Workflow complete.")
     logger.info("📊 Summary of this deployment:")
+
+    summary_lines = []
+    
     logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
     logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' (ID: {network_id}) added to org.")
 
@@ -128,8 +133,58 @@ def main():
     # Manual step
     logger.info(f"  7. ⚰️ Manual step: delete org '{dead_name}' if needed.")
 
-    # Finished
-    logger.info(f"  8. 🎩 Deployment finished successfully.")
+    # Light touch: only decorate MAJOR sections
+    def colorize(text, color_code):
+        return f"\033[{color_code}m{text}\033[0m"
+
+    # 8. VLAN and DHCP Summary
+    summary_lines.append(colorize("  8. 📜 VLAN and DHCP Configuration:", "96"))  # Cyan header
+    for vlan in config["vlans"]:
+        vlan_id = vlan.get("id")
+        name = vlan.get("name", "Unnamed VLAN")
+        subnet = vlan.get("subnet", "Unknown Subnet")
+        gateway = vlan.get("gatewayIp", "Unknown Gateway")
+        reserved_ranges = vlan.get("reservedIpRanges", [])
+        exclusions = [f"{r['start']}–{r['end']}" for r in reserved_ranges] if reserved_ranges else ["None"]
+
+        summary_lines.append(f"    - VLAN {vlan_id} ({name}): {subnet}, Gateway: {gateway}")
+        summary_lines.append(f"      Reserved IPs: {', '.join(exclusions)}")
+
+    # 9. Fixed IP Assignments
+    summary_lines.append(colorize("  9. 📌 Fixed IP Assignments:", "93"))  # Yellow header
+    for vlan in config["vlans"]:
+        vlan_id = vlan.get("id")
+        name = vlan.get("name", "Unnamed VLAN")
+        assignments = vlan.get("fixedIpAssignments", {})
+        if assignments:
+            summary_lines.append(f"    - VLAN {vlan_id} ({name}):")
+            for mac, details in assignments.items():
+                ip = details.get("ip", "Unknown IP")
+                device_name = details.get("name", "Unnamed Device")
+                summary_lines.append(f"        {mac} → {ip} ({device_name})")
+        else:
+            summary_lines.append(f"    - VLAN {vlan_id} ({name}): No fixed IP assignments.")
+
+    # 10. Deployment finished
+    summary_lines.append(colorize(" 10. 🎩 Deployment finished successfully.", "92"))  # Green header
+
+    # Print summary to console
+    for line in summary_lines:
+        logger.info(line)
+
+    # Save plain text summary
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    summary_folder = "logs/summary_log"
+    os.makedirs(summary_folder, exist_ok=True)
+    summary_file = os.path.join(summary_folder, f"deployment_summary_{timestamp}.txt")
+    with open(summary_file, "w") as f:
+        for line in summary_lines:
+            # Strip ANSI escape codes only for saving
+            plain_line = line.replace("\033[96m", "").replace("\033[93m", "").replace("\033[92m", "").replace("\033[0m", "")
+            f.write(plain_line + "\n")
+
+    logger.info(f"📝 Deployment summary saved to {summary_file}")
+
 
 if __name__ == "__main__":
     main()
