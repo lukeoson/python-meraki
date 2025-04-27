@@ -1,4 +1,4 @@
-# meraki_sdk/network_constructs/vlans/fixed_assignments.py
+# meraki_sdk/network/vlans/fixed_assignments.py
 import yaml
 import os
 

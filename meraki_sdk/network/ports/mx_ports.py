@@ -1,4 +1,4 @@
-# meraki_sdk/network_constructs/ports/mx_ports.py
+# meraki_sdk/network/ports/mx_ports.py
 import logging
 from meraki.exceptions import APIError
 import json

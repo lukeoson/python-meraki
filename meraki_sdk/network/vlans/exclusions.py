@@ -1,4 +1,4 @@
-# meraki_sdk/network_constructs/vlans/exclusions.py
+# meraki_sdk/network/vlans/exclusions.py
 
 import ipaddress
 import math

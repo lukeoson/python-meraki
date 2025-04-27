@@ -76,8 +76,8 @@ python main.py
 │   ├── logging_config.py
 │   ├── devices/
 │   │   └── setup_devices.py
-│   ├── network_constructs/
-│   │   ├── setup_network_constructs.py
+│   ├── network/
+│   │   ├── setup_network.py
 │   │   ├── vlans/
 │   │   │   ├── mx.py
 │   │   │   ├── exclusions.py

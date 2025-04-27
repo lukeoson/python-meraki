@@ -1,4 +1,4 @@
-# meraki_sdk/network_constructs/routing/static.py
+# meraki_sdk/network/routing/static.py
 
 import logging
 from meraki.exceptions import APIError
