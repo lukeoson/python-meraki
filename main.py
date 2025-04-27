@@ -129,8 +129,39 @@ def main():
     # Manual step
     logger.info(f"  7. ⚰️ Manual step: delete org '{dead_name}' if needed.")
 
-    # Finished
-    logger.info(f"  8. 🎩 Deployment finished successfully.")
+    # 8. VLAN and DHCP Summary
+    logger.info("  8. 📜 VLAN and DHCP Configuration:")
+    for vlan in config["vlans"]:
+        vlan_id = vlan.get("id")
+        name = vlan.get("name", "Unnamed VLAN")
+        subnet = vlan.get("subnet", "Unknown Subnet")
+        gateway = vlan.get("gatewayIp", "Unknown Gateway")
+        reserved_ranges = vlan.get("reservedIpRanges", [])
+        exclusions = []
+        for r in reserved_ranges:
+            exclusions.append(f"{r['start']}–{r['end']}")
+        exclusions_str = ", ".join(exclusions) if exclusions else "None"
+        logger.info(f"      - VLAN {vlan_id} ({name}): {subnet}, Gateway: {gateway}")
+        logger.info(f"        Reserved IPs: {exclusions_str}")
+
+    # 9. Fixed IP Assignments Summary
+    logger.info("  9. 📌 Fixed IP Assignments:")
+    for vlan in config["vlans"]:
+        vlan_id = vlan.get("id")
+        name = vlan.get("name", "Unnamed VLAN")
+        assignments = vlan.get("fixedIpAssignments", {})
+        if assignments:
+            logger.info(f"      - VLAN {vlan_id} ({name}):")
+            for mac, details in assignments.items():
+                ip = details.get("ip", "Unknown IP")
+                device_name = details.get("name", "Unnamed Device")
+                logger.info(f"          {mac} → {ip} ({device_name})")
+        else:
+            logger.info(f"      - VLAN {vlan_id} ({name}): No fixed IP assignments.")
+
+    # 10. Deployment finished
+    logger.info(" 10. 🎩 Deployment finished successfully.")
+
 
 if __name__ == "__main__":
     main()

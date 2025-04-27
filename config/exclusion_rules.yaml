@@ -1,1 +1,9 @@
+# This file controls the % of addresses reserved for DHCP exclusions per VLAN.
+# Key = VLAN name. Value = exclusion ratio (0.0–1.0).
+# Example:
+# MGMT: 0.5    # 50% of usable IPs reserved for manual IPs
+# Internal: 0.25  # 25% reserved
+#
+# If a VLAN is missing from this file, it defaults to 25% reservation.
+
 MGMT: 0.5

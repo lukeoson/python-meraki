@@ -44,6 +44,7 @@ def configure_mx_ports(dashboard, network_id, config):
                     payload["allowedVlans"] = final_config["allowedVlans"]
                 else:
                     logger.debug(f"Skipping allowedVlans for port {port_number} (type={final_config.get('type')}) because it's not trunk.")
+
             if "dropUntaggedTraffic" in final_config:
                 payload["dropUntaggedTraffic"] = final_config["dropUntaggedTraffic"]
             if "poeEnabled" in final_config:

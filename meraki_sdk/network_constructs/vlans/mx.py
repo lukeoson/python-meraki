@@ -1,7 +1,10 @@
 # meraki_sdk/network_constructs/mx.py
+
 import logging
 import json
 from meraki.exceptions import APIError
+from meraki_sdk.network_constructs.vlans.exclusions import load_exclusion_overrides, get_vlan_exclusion
+from meraki_sdk.network_constructs.vlans.fixed_assignments import load_fixed_assignments, get_vlan_fixed_assignments
 
 logger = logging.getLogger(__name__)
 
@@ -26,23 +29,45 @@ def ensure_vlans_enabled(dashboard, network_id):
     except Exception as e:
         logger.error(f"❌ Unexpected error while managing VLANs: {e}")
 
+def merge_fixed_assignments(vlan, fixed_assignments_data):
+    if "fixedIpAssignments" not in vlan:
+        vlan["fixedIpAssignments"] = {}
+
+    yaml_assignments = get_vlan_fixed_assignments(vlan, fixed_assignments_data)
+
+    # First pass: merge without overwriting existing MACs
+    for mac, details in yaml_assignments.items():
+        if mac in vlan["fixedIpAssignments"]:
+            logger.warning(f"⚠️ Conflict on MAC {mac} in VLAN {vlan.get('name', 'Unnamed')}: keeping config.json assignment, ignoring YAML.")
+            continue
+        vlan["fixedIpAssignments"][mac] = details
+
+    # Second pass: check for duplicate IPs
+    seen_ips = {}
+    for mac, details in list(vlan["fixedIpAssignments"].items()):
+        ip = details.get("ip")
+        if not ip:
+            continue
+        if ip in seen_ips:
+            # IP conflict! Keep earlier MAC (JSON wins because it’s first)
+            logger.error(f"❌ Duplicate IP {ip} assigned in VLAN {vlan.get('name', 'Unnamed')}. Keeping {seen_ips[ip]}, removing {mac}.")
+            del vlan["fixedIpAssignments"][mac]
+        else:
+            seen_ips[ip] = mac
+
+    # Optional: log final mapping
+    logger.info(f"🗺️ Final fixed IP assignments for VLAN {vlan.get('name', 'Unnamed')}:")
+    for mac, details in vlan["fixedIpAssignments"].items():
+        logger.info(f"   📌 {mac} → {details['ip']} ({details.get('name', 'Unnamed Device')})")
+
 def configure_mx_vlans(dashboard, network_id, config):
     try:
         logger.info("🧑‍🔬 Starting MX VLAN configuration...")
         ensure_vlans_enabled(dashboard, network_id)
 
-        # 🚀 Inject exclusion defaults here
-        from meraki_sdk.network_constructs.vlans.exclusions import load_exclusion_overrides, get_vlan_exclusion
+        # 🚀 Load overrides and fixed assignments
         exclusion_overrides = load_exclusion_overrides()
-
-        from meraki_sdk.network_constructs.vlans.fixed_assignments import load_fixed_assignments, get_vlan_fixed_assignments
-
         fixed_assignments_data = load_fixed_assignments()
-
-        for vlan in vlans_config:
-            vlan_fixed_assignments = get_vlan_fixed_assignments(vlan, fixed_assignments_data)
-            if vlan_fixed_assignments:
-                vlan["fixedIpAssignments"] = vlan_fixed_assignments
 
         for vlan in config["vlans"]:
             vlan_id = str(vlan["id"])
@@ -50,7 +75,9 @@ def configure_mx_vlans(dashboard, network_id, config):
             subnet = vlan["subnet"]
             gateway = vlan["gatewayIp"]
 
-            # 🔥 Respect manual reservedIpRanges if provided, otherwise generate
+            merge_fixed_assignments(vlan, fixed_assignments_data)
+
+            # 🔥 Reserved IPs
             if not vlan.get("reservedIpRanges"):
                 logger.info(f"🔧 Auto-generating reserved IPs for VLAN {name}")
                 vlan["reservedIpRanges"] = get_vlan_exclusion(vlan, default_ratio=0.25, per_vlan_overrides=exclusion_overrides)
@@ -79,7 +106,7 @@ def configure_mx_vlans(dashboard, network_id, config):
                     logger.error(f"❌ Failed to create VLAN {vlan_id}: {e}")
                     continue  # skip to next VLAN
 
-            # Step 2: Update with advanced DHCP settings
+            # Step 2: Update with full settings
             update_payload = {
                 "name": name,
                 "subnet": subnet,
