@@ -14,10 +14,10 @@ from meraki_sdk.device import (
     claim_devices,
     set_device_address,
     set_device_names,
-    generate_device_names
+    generate_device_names,
 )
-from meraki_sdk.network_constructs.vlans import configure_mx_vlans
-from meraki_sdk.devices import configure_mx_ports, setup_devices
+from meraki_sdk.devices import setup_devices
+from meraki_sdk.network_constructs.setup_network_constructs import setup_network_constructs
 from meraki_sdk.logging_config import setup_logging
 from config_loader import load_all_configs
 
@@ -36,35 +36,32 @@ def main():
     parser.add_argument("--destroy", action="store_true", help="Remove devices from old network")
     args = parser.parse_args()
 
-    # Load configuration files
     config = load_all_configs()
-
     dashboard = get_dashboard_session()
 
-    # Fetch current orgs and determine next org name
     orgs = dashboard.organizations.getOrganizations()
     org_base_name = config["base"]["baseNames"]["organization"]
     net_base_name = config["base"]["baseNames"]["network"]
     org_name, _ = get_next_org_name_by_prefix(orgs, org_base_name)
 
-    # Set up logging with dynamic log filename
+    # Setup logging
     log_filename = f"py-meraki-{org_name.lower().replace(' ', '')}.log"
     setup_logging(log_filename)
     logger = logging.getLogger(__name__)
 
     logger.info(f"Loaded config: {json.dumps(config, indent=2)}")
 
-    # Create new organization
+    # Create organization
     new_org = dashboard.organizations.createOrganization(name=org_name)
     org_id = new_org["id"]
     logger.info(f"✅ Created organization {org_name} ({org_id})")
 
-    # Create new network
+    # Create network
     config["base"]["network"]["name"] = f"{net_base_name} {org_name.split()[-1]}"
     network_id = ensure_network(dashboard, org_id, config["base"]["network"])
     logger.info(f"✅ Created network {config['base']['network']['name']} ({network_id})")
 
-    # Remove devices from previous network and clean up old org
+    # Destroy old org if needed
     if args.destroy:
         previous_org = get_previous_org(orgs, org_base_name)
         if previous_org:
@@ -86,105 +83,85 @@ def main():
         else:
             logger.warning(f"⚠️ No valid previous {org_base_name} org to remove devices from.")
 
-    # Claim devices to new network
-    serials = [d["serial"] for d in config["devices"]["devices"]]
-    claim_devices(dashboard, network_id, serials)
+    # 📦 Step 1: Setup devices (claim, address, names)
+    named_devices = setup_devices(dashboard, network_id, config)
 
-    # 📦 NEW REFACTOR: Clean post-claim setup
-    setup_devices(dashboard, network_id, config)
+    # 🏗️ Step 2: Setup logical network constructs (VLANs, Static Routes, etc.)
+    setup_network_constructs(dashboard, network_id, config)
 
-    # Wrap up
-    device_summary = "\n".join([
-        f"     - {d['serial']} ({d['type']})" for d in config["devices"]["devices"]
-    ])
+    # 🔌 Step 3: Configure MX ports (now that VLANs are enabled)
+    from meraki_sdk.network_constructs.ports.mx_ports import configure_mx_ports
+    logger.info("🔌 Configuring MX ports…")
+    configure_mx_ports(dashboard, network_id, config["mx_ports"])
 
-    # Log the summary of the deployment
+    # 🏁 Step 4: Wrap up logging
     logger.info("🏁 Workflow complete.")
     logger.info("📊 Summary of this deployment:")
 
-    summary_lines = []
-    
-    logger.info(f"  1. 🏢 Organization '{org_name}' (ID: {org_id}) created.")
-    logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' (ID: {network_id}) added to org.")
+    # 1. Org and Network
+    logger.info(f"  1. 🏢 Organization '{org_name}' created.")
+    logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' created.")
 
-    # Group claimed devices by type
-    device_types = [device["type"] for device in config["devices"]["devices"]]
-    device_counter = Counter(device_types)
+    # 2. Devices claimed
+    device_types = [d["type"] for d in config["devices"]["devices"]]
+    counts = Counter(device_types)
+    logger.info("  3. 📦 Devices claimed:")
+    for t, cnt in counts.items():
+        logger.info(f"     - {cnt}x {t}")
 
-    logger.info(f"  3. 📦 Devices claimed:")
-    for device_type, count in device_counter.items():
-        logger.info(f"     - {count}x {device_type}")
-
-    # Named devices with template
+    # 3. Device naming
     logger.info(f"  4. 🏷️ Devices named using template: {config['base']['naming']['template']}")
-    generated_devices = generate_device_names(
-        config["devices"]["devices"],
-        config["base"]["naming"]
-        )
-    for device in generated_devices:
-        logger.info(f"     - {device['serial']} → {device['name']}")
+    for d in named_devices:
+        logger.info(f"     - {d['serial']} → {d['name']}")
 
-    # VLANs
-    logger.info(f"  5. 🌐 VLANs configured: {len(config['vlans'])} VLANs applied.")
+    # 5. Static routes
+    if config.get("static_routes"):
+        logger.info("  5. 🛣️ Static routes created:")
+        for r in config["static_routes"]:
+            gw = r.get("gatewayIp", r.get("nextHopIp"))
+            default = " (default gateway)" if r.get("defaultGateway") else ""
+            logger.info(f"     - {r['name']}: {r['subnet']} via {gw}{default}")
 
-    # Ports
-    logger.info(f"  6. 🔌 MX ports configured: {len(config['mx_ports']['ports'])} custom + {len(config['mx_ports'].get('defaults', {}))} defaults.")
+    # Build the file summary
+    summary_lines = []
 
-    # Manual step
-    logger.info(f"  7. ⚰️ Manual step: delete org '{dead_name}' if needed.")
-
-    # Light touch: only decorate MAJOR sections
-    def colorize(text, color_code):
-        return f"\033[{color_code}m{text}\033[0m"
-
-    # 8. VLAN and DHCP Summary
-    summary_lines.append(colorize("  8. 📜 VLAN and DHCP Configuration:", "96"))  # Cyan header
+    # VLAN & DHCP
+    summary_lines.append("\n📜 VLAN and DHCP Summary:")
     for vlan in config["vlans"]:
-        vlan_id = vlan.get("id")
-        name = vlan.get("name", "Unnamed VLAN")
-        subnet = vlan.get("subnet", "Unknown Subnet")
-        gateway = vlan.get("gatewayIp", "Unknown Gateway")
-        reserved_ranges = vlan.get("reservedIpRanges", [])
-        exclusions = [f"{r['start']}–{r['end']}" for r in reserved_ranges] if reserved_ranges else ["None"]
+        summary_lines.append(f"    - VLAN {vlan['id']} ({vlan.get('name','')}): {vlan['subnet']}")
 
-        summary_lines.append(f"    - VLAN {vlan_id} ({name}): {subnet}, Gateway: {gateway}")
-        summary_lines.append(f"      Reserved IPs: {', '.join(exclusions)}")
-
-    # 9. Fixed IP Assignments
-    summary_lines.append(colorize("  9. 📌 Fixed IP Assignments:", "93"))  # Yellow header
+    # Fixed IP assignments
+    summary_lines.append("\n📌 Fixed IP Assignments:")
     for vlan in config["vlans"]:
-        vlan_id = vlan.get("id")
-        name = vlan.get("name", "Unnamed VLAN")
-        assignments = vlan.get("fixedIpAssignments", {})
-        if assignments:
-            summary_lines.append(f"    - VLAN {vlan_id} ({name}):")
-            for mac, details in assignments.items():
-                ip = details.get("ip", "Unknown IP")
-                device_name = details.get("name", "Unnamed Device")
-                summary_lines.append(f"        {mac} → {ip} ({device_name})")
+        assigns = vlan.get("fixedIpAssignments", {})
+        if assigns:
+            summary_lines.append(f"    - VLAN {vlan['id']} ({vlan.get('name','')}):")
+            for mac, info in assigns.items():
+                summary_lines.append(f"        {mac} → {info['ip']} ({info.get('name','')})")
         else:
-            summary_lines.append(f"    - VLAN {vlan_id} ({name}): No fixed IP assignments.")
+            summary_lines.append(f"    - VLAN {vlan['id']} ({vlan.get('name','')}): No fixed IPs.")
 
-    # 10. Deployment finished
-    summary_lines.append(colorize(" 10. 🎩 Deployment finished successfully.", "92"))  # Green header
+    # Static routes in file
+    if config.get("static_routes"):
+        summary_lines.append("\n🛣️ Static Routes:")
+        for r in config["static_routes"]:
+            gw = r.get("gatewayIp", r.get("nextHopIp"))
+            default = " (default gateway)" if r.get("defaultGateway") else ""
+            summary_lines.append(f"    - {r['name']}: {r['subnet']} via {gw}{default}")
 
-    # Print summary to console
-    for line in summary_lines:
-        logger.info(line)
-
-    # Save plain text summary
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Persist summary to disk using the org’s sequence as filename
+    org_key = org_name.lower().replace(" ", "")  # e.g. "percystreet154"
     summary_folder = "logs/summary_log"
     os.makedirs(summary_folder, exist_ok=True)
-    summary_file = os.path.join(summary_folder, f"deployment_summary_{timestamp}.txt")
+    summary_file = os.path.join(
+        summary_folder,
+        f"deployment_summary_{org_key}.txt"
+    )
     with open(summary_file, "w") as f:
         for line in summary_lines:
-            # Strip ANSI escape codes only for saving
-            plain_line = line.replace("\033[96m", "").replace("\033[93m", "").replace("\033[92m", "").replace("\033[0m", "")
-            f.write(plain_line + "\n")
+            f.write(line + "\n")
 
     logger.info(f"📝 Deployment summary saved to {summary_file}")
-
 
 if __name__ == "__main__":
     main()
