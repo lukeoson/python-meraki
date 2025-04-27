@@ -1,4 +1,4 @@
-# meraki_sdk/network_constructs/__init__.py
+# meraki_sdk/network/__init__.py
 
 #from .firewall import configure_mx_firewall
 #from .routing import configure_mx_routing

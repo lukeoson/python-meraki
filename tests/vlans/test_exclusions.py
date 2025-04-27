@@ -1,7 +1,7 @@
-# tests/network_constructs/vlans/test_exclusions.py
+# tests/network/vlans/test_exclusions.py
 
 import pytest
-from meraki_sdk.network_constructs.vlans.exclusions import get_vlan_exclusion, generate_exclusion_ranges
+from meraki_sdk.network.vlans.exclusions import get_vlan_exclusion, generate_exclusion_ranges
 
 def test_generate_exclusion_ranges_basic():
     subnet = "10.0.0.0/24"

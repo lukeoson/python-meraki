@@ -1,11 +1,11 @@
-# meraki_sdk/network_constructs/mx.py
+# meraki_sdk/network/mx.py
 
 import logging
 import json
 import ipaddress
 from meraki.exceptions import APIError
-from meraki_sdk.network_constructs.vlans.exclusions import load_exclusion_overrides, get_vlan_exclusion
-from meraki_sdk.network_constructs.vlans.fixed_assignments import load_fixed_assignments, get_vlan_fixed_assignments
+from meraki_sdk.network.vlans.exclusions import load_exclusion_overrides, get_vlan_exclusion
+from meraki_sdk.network.vlans.fixed_assignments import load_fixed_assignments, get_vlan_fixed_assignments
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def setup_devices(dashboard, network_id, config):
     """
     Full post-claim setup: claim devices, set address, set names.
-    (Port configuration is now handled in setup_network_constructs.)
+    (Port configuration is now handled in setup_network.)
     """
     logger.info("📦 Starting post-claim device configuration...")
 
