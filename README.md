@@ -26,7 +26,7 @@ This tool creates new Meraki organizations and networks, claims devices, sets VL
 - Python 3.10+
 - Cisco Meraki API Key
 - Devices already claimable via API
-- [`uv`](https://github.com/astral-sh/uv) installed (`pip install uv`)
+- [`uv`](https://github.com/astral-sh/uv) installed
 
 ---
 
