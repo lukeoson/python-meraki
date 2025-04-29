@@ -1,0 +1,73 @@
+# config/manifest.yaml
+#
+# 📌 Manifest File — Main entrypoint for project orchestration.
+#
+# This file declares which networks to create, where to find their configs,
+# and how to apply global defaults and devices.
+#
+# ✅ `defaults`: points to a YAML file that defines fallback configuration values.
+# ✅ `devices`: points to a central device inventory.
+# ✅ `projects`: declares all orgs and networks to build.
+#
+# 🔁 Each `project` represents a Meraki organization.
+# 🔁 Each `network` within a project defines one network to be created.
+#
+# 🔗 Each network can optionally load specific configs (firewall, routes, VLANs, etc.).
+# 🔗 These override global `defaults.yaml` values or `common/` shared files.
+
+# 📍 Global defaults used across all projects
+defaults: defaults.yaml
+
+# 🧾 Central device registry (grouped via tag)
+devices: devices/devices.yaml
+
+# 🧱 Project-by-project declarations
+projects:
+
+  - name: Percy Street Production
+    org_base_name: Percy Street
+    organization:
+      tags: [studio, hub]
+    networks:
+      - base_name: Studio Hub
+        naming:
+          building: percy
+          room: studio
+          function: hub
+        config:
+          vlans: common/vlans.yaml
+          firewall: common/firewall.yaml
+          static_routes: common/static_routes.yaml
+          mx_ports: common/ports/mx_ports.yaml
+          fixed_assignments: projects/percy_street/fixed_ip_assignments.yaml
+
+      - base_name: Studio Spoke
+        naming:
+          building: percy
+          room: studio
+          function: spoke
+        config:
+          vlans: common/vlans.yaml
+          firewall: common/firewall.yaml
+
+  - name: Remote Branch Expansion
+    org_base_name: Cloud Infra
+    networks:
+      - base_name: Branch One
+        naming:
+          building: remote1
+          room: rack
+          function: vpn
+        config:
+          vlans: common/vlans.yaml
+          firewall: common/firewall.yaml
+          fixed_assignments: projects/branch_remote/fixed_ip_assignments.yaml
+
+      - base_name: Branch Two
+        naming:
+          building: remote2
+          room: rack
+          function: vpn
+        config:
+          vlans: common/vlans.yaml
+          firewall: common/firewall.yaml

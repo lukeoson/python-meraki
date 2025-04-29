@@ -1,0 +1,60 @@
+# config/devices/devices.yaml
+#
+# 📦 Meraki Device Inventory
+#
+# This file defines *all Meraki devices* across projects. Devices are grouped
+# using a `tag`, which maps to a {org_base_name}-{net_base_name} combination.
+#
+# 🔖 Each group should have a single `tag` (as a string).
+# ✅ All devices inside that group inherit the tag automatically.
+# ✅ You can override the tag at the device level using `tags: [ ... ]` (array).
+# ✅ You can optionally define a `model` (e.g., MV72, MX68CW) for model-specific logic.
+# ✅ You can now specify an `overrides:` block for device-specific settings (e.g., static IPs, notes, port configs).
+#
+# 💥 DO NOT use arrays at the group `tag` level — use `tags:` under a device if needed.
+# 💡 Devices listed in multiple groups (via override) will be included in each.
+
+groups:
+  - tag: percy-street-studio-hub
+    devices:
+      - serial: Q2QN-CHDD-MQ24
+        type: MX
+        model: MX65
+        overrides:
+          notes: "Ground floor — primary MX."
+      - serial: Q2JV-FTGL-UWU5
+        type: MV
+        model: MV72
+      - serial: Q2VY-69FH-2N6B
+        type: MG
+        model: MG21
+      - serial: Q3CA-NGG7-PUWM
+        type: MT
+        model: MT10
+      - serial: Q3CE-FKEU-39PL
+        type: MT
+        model: MT11
+      - serial: Q3CB-3E8E-Z237
+        type: MT
+        model: MT12
+      - serial: Q3CG-QW5B-987T
+        type: MT
+        model: MT14
+      - serial: Q3CH-WMME-ACJY
+        type: MT
+        model: MT30
+      - serial: Q3CC-BEXL-HEFG
+        type: MT
+        model: MT20
+
+  - tag: percy-remote-branch-one
+    devices:
+      - serial: Q2NY-XQ5P-DLZU
+        type: MX
+        model: MX68CW
+      - serial: Q2GV-XG96-DP9D
+        type: MV
+        model: MV12W
+      - serial: Q2GV-YTTJ-AFC3
+        type: MV
+        model: MV12W

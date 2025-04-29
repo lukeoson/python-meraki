@@ -1,0 +1,25 @@
+# config/defaults.yaml
+#
+# 🧰 Global Defaults — Applied to all orgs/networks unless overridden in project config.
+#
+# These values are used to reduce repetition and promote consistency.
+# You can override any field at the project/network/device level as needed.
+
+naming:
+  city: lon
+  template: "{city}-{building}-{room}-{function}-{type}"
+
+organization:
+  tags: [python-sdk]
+  notes: "Auto-created by Python SDK"
+
+network:
+  type: combined
+  time_zone: Europe/London
+  tags: [python-sdk]
+  notes: "Auto-created network"
+
+management_vlan:
+  name: MGMT
+  id: 10
+
