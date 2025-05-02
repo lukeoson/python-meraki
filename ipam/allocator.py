@@ -17,7 +17,7 @@ class IPAMAllocator:
         Allocate a large network block from the supernet (e.g. a /16 per network).
         """
         for candidate in self.supernet.subnets(new_prefix=prefixlen):
-            if candidate not in self.used_subnets:
+            if all(not candidate.overlaps(used) for used in self.used_subnets):
                 self.used_subnets.add(candidate)
                 self.network_blocks.append(candidate)
                 logger.debug(f"Allocated network block: {candidate}")
@@ -31,6 +31,9 @@ class IPAMAllocator:
 
         E.g. 10.10.0.0/16 with vlan_id=20 and prefixlen=24 → 10.10.20.0/24
         """
+
+        logger.debug(f"Allocating VLAN {vlan_id} in network block {network_block_cidr}")
+
         block = ipaddress.ip_network(network_block_cidr, strict=False)
         host_bits = 32 - prefixlen
         block_size = 1 << host_bits
@@ -71,7 +74,7 @@ class IPAMAllocator:
         """
         for block in self.network_blocks:
             for candidate in ipaddress.ip_network(block).subnets(new_prefix=prefixlen):
-                if candidate not in self.used_subnets:
+                if all(not candidate.overlaps(used) for used in self.used_subnets):
                     self.used_subnets.add(candidate)
                     logger.debug(f"Allocated generic subnet: {candidate}")
                     return str(candidate)

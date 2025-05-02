@@ -94,6 +94,11 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
     ipam_supernet = ipam_cfg.get("supernet")
     if not ipam_supernet:
         raise ValueError("❌ IPAM 'supernet' must be defined in defaults.yaml")
+    
+    # 🧱 Preload reserved space before allocator is created
+    reserved_blocks = ipam_cfg.get("reserved", [])
+    for cidr in reserved_blocks:
+        ipaddress.ip_network(cidr, strict=False)  # validate early
 
     allocation = ipam_cfg.get("allocation", {})
     try:
@@ -104,7 +109,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
         raise ValueError(f"❌ Missing IPAM allocation setting: {e}")
 
     # ✅ Shared allocator — so subnets don’t overlap across networks
-    allocator = IPAMAllocator(ipam_supernet)
+    allocator = IPAMAllocator(ipam_supernet, used_subnets=reserved_blocks)
 
     resolved = []
 
