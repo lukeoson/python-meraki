@@ -9,6 +9,7 @@ from meraki_sdk.network.setup_network import setup_network
 from meraki_sdk.logging_config import setup_logging
 from meraki_sdk.logging.summary import log_deployment_summary
 from config_resolver import resolve_project_configs
+from meraki_sdk.org import get_next_sequence_name, get_previous_org
 
 # 💾 Use new backend abstraction layer
 from backend.local_yaml_backend import LocalYAMLBackend
@@ -45,29 +46,36 @@ def main():
     for org_base, networks in grouped.items():
         project_name = networks[0]["project_name"]
 
-        # 🏢 Get existing orgs and generate new org name
+        # 🏢 Get all orgs and determine next available name
         orgs = dashboard.organizations.getOrganizations()
-        existing = [o for o in orgs if o["name"].startswith(org_base)]
-        org_suffix = f"{len(existing):03d}"
-        org_name = f"{org_base} {org_suffix}"
+        org_name, next_seq = get_next_sequence_name(orgs, org_base)
         new_org = dashboard.organizations.createOrganization(name=org_name)
         org_id = new_org["id"]
 
         # 🔥 Cleanup old orgs
         if args.destroy:
-            previous = existing[-1] if existing else None
+            previous = get_previous_org(orgs, org_base)
             if previous:
                 prev_org_id = previous["id"]
                 logger.info(f"🔍 Cleaning up previous org: {previous['name']} ({prev_org_id})")
+        
                 try:
                     prev_nets = dashboard.organizations.getOrganizationNetworks(prev_org_id)
                     for net in prev_nets:
-                        logger.info(f"🗑️ Removing devices from network: {net['name']}")
-                        remove_devices_from_network(dashboard, net["id"], all_devices)
+                        logger.info(f"🗑️ Cleaning up network: {net['name']}")
+        
+                        # 🔍 Get all devices in this network
+                        devices_in_net = dashboard.networks.getNetworkDevices(net["id"])
+        
+                        # 🚫 Remove devices
+                        remove_devices_from_network(dashboard, net["id"], devices_in_net)
+        
+                        # 🗑️ Delete network
                         dashboard.networks.deleteNetwork(net["id"])
                         logger.info(f"✅ Deleted network: {net['name']}")
                 except Exception as e:
                     logger.error(f"❌ Error deleting networks from old org: {e}")
+        
                 try:
                     dead_name = f"DEAD - Delete old {previous['name']}"
                     dashboard.organizations.updateOrganization(organizationId=prev_org_id, name=dead_name)
@@ -85,7 +93,7 @@ def main():
             config = entry["network_config"]
             logger.info(f"🚀 Starting deployment for: {project_name} / {tag}")
 
-            net_name = f"{net_base} {org_suffix}"
+            net_name = f"{net_base} {next_seq:03d}"
             config["network"]["name"] = net_name
             network_id = ensure_network(dashboard, org_id, config["network"])
             config["base"] = entry.get("base", {})
@@ -100,16 +108,16 @@ def main():
                         device_tags = [device_tags]
                     device["tags"] = list(set(device_tags + [group_tag]))
                     flat_devices.append(device)
-            
+
             # Normalize tag comparison (handle underscores/hyphens)
             def normalize(s):
                 return s.replace("_", "-")
-            
+
             tagged_devices = [
                 d for d in flat_devices
                 if normalize(tag) in [normalize(t) for t in d.get("tags", [])]
             ]
-            
+
             if not tagged_devices:
                 raise ValueError(f"No devices found for tag '{tag}'. Check your devices.yaml.")
 

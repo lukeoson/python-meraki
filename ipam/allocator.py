@@ -28,22 +28,22 @@ class IPAMAllocator:
         """
         Allocate a subnet within a network block, attempting to align address structure
         based on VLAN ID. Works best when block is /16 and prefixlen is /24, but generalizes.
-    
+
         E.g. 10.10.0.0/16 with vlan_id=20 and prefixlen=24 → 10.10.20.0/24
         """
         block = ipaddress.ip_network(network_block_cidr, strict=False)
         host_bits = 32 - prefixlen
         block_size = 1 << host_bits
-    
+
         base = int(block.network_address)
         offset = vlan_id * block_size
         candidate_net = ipaddress.ip_network((base + offset, prefixlen))
-    
+
         if candidate_net in self.used_subnets:
             raise ValueError(f"CIDR {candidate_net} already allocated")
         if not candidate_net.subnet_of(block):
             raise ValueError(f"{candidate_net} not within block {block}")
-    
+
         self.used_subnets.add(candidate_net)
         logger.debug(f"Allocated VLAN subnet {candidate_net} for VLAN ID {vlan_id}")
         return str(candidate_net)
@@ -63,4 +63,17 @@ class IPAMAllocator:
         if offset >= len(hosts):
             raise IndexError("Offset exceeds available host addresses")
         return str(hosts[offset])
+    
+    def allocate_subnet(self, prefixlen):
+        """
+        Allocate a generic subnet (e.g., /30, /25, /26) from any previously assigned network block.
+        This avoids VLAN alignment logic and simply finds the next available subnet.
+        """
+        for block in self.network_blocks:
+            for candidate in ipaddress.ip_network(block).subnets(new_prefix=prefixlen):
+                if candidate not in self.used_subnets:
+                    self.used_subnets.add(candidate)
+                    logger.debug(f"Allocated generic subnet: {candidate}")
+                    return str(candidate)
+        raise ValueError("No available subnets left in network blocks")
 

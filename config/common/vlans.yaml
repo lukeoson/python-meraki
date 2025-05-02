@@ -31,8 +31,8 @@ vlans:
     id: 20
     name: Internal
 
-  - <<: *vlan_defaults
-    id: 999
-    name: Transit
-    ipam:
-      cidr: /30
+  #- <<: *vlan_defaults
+  #  id: 999
+  #  name: Transit
+  #  ipam:
+  #    cidr: /30
