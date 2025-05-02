@@ -23,7 +23,6 @@ def main():
     args = parser.parse_args()
 
     # 🪵 Logging and Meraki session
-    setup_logging("py-meraki.log")
     logger = logging.getLogger(__name__)
     dashboard = get_dashboard_session()
 
@@ -52,30 +51,36 @@ def main():
         new_org = dashboard.organizations.createOrganization(name=org_name)
         org_id = new_org["id"]
 
+        # ✅ Set up org-specific logging
+        log_safe_name = org_name.lower().replace(" ", "").replace("-", "")
+        custom_log_name = f"custom-{log_safe_name}.log"
+        setup_logging(custom_log_name)
+        logger = logging.getLogger(__name__)
+
         # 🔥 Cleanup old orgs
         if args.destroy:
             previous = get_previous_org(orgs, org_base)
             if previous:
                 prev_org_id = previous["id"]
                 logger.info(f"🔍 Cleaning up previous org: {previous['name']} ({prev_org_id})")
-        
+
                 try:
                     prev_nets = dashboard.organizations.getOrganizationNetworks(prev_org_id)
                     for net in prev_nets:
                         logger.info(f"🗑️ Cleaning up network: {net['name']}")
-        
+
                         # 🔍 Get all devices in this network
                         devices_in_net = dashboard.networks.getNetworkDevices(net["id"])
-        
+
                         # 🚫 Remove devices
                         remove_devices_from_network(dashboard, net["id"], devices_in_net)
-        
+
                         # 🗑️ Delete network
                         dashboard.networks.deleteNetwork(net["id"])
                         logger.info(f"✅ Deleted network: {net['name']}")
                 except Exception as e:
                     logger.error(f"❌ Error deleting networks from old org: {e}")
-        
+
                 try:
                     dead_name = f"DEAD - Delete old {previous['name']}"
                     dashboard.organizations.updateOrganization(organizationId=prev_org_id, name=dead_name)

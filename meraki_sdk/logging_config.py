@@ -16,7 +16,7 @@ def setup_logging(log_name: str = "python_meraki.log"):
         level=logging.INFO,
         format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s',
         handlers=[
-            logging.FileHandler(log_file_path),
+            logging.FileHandler(log_file_path, mode='a'),
             logging.StreamHandler()
         ]
     )
