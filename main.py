@@ -10,6 +10,7 @@ from meraki_sdk.logging_config import setup_logging
 from meraki_sdk.logging.summary import log_deployment_summary
 from config_resolver import resolve_project_configs
 from meraki_sdk.org import get_next_sequence_name, get_previous_org
+from meraki_sdk.logging.intended_state import save_intended_state
 
 # 💾 Use new backend abstraction layer
 from backend.local_yaml_backend import LocalYAMLBackend
@@ -132,7 +133,16 @@ def main():
             })
 
             setup_network(dashboard, network_id, config)
-            log_deployment_summary(config, org_name, named_devices)
+
+            # 📝 Save summary and full intended state for audit/debugging
+            log_safe_name = org_name.lower().replace(" ", "").replace("-", "")
+            summary_log_name = f"summary-{log_safe_name}.log"
+            log_deployment_summary(config, org_name, named_devices, summary_log_name)
+
+            # 💾 Save intended state (JSON representation of this config)
+            state_path = save_intended_state(config, org_name)
+            logger.info(f"📦 Intended state saved to {state_path}")
+
             logger.info(f"✅ Deployment for {org_name} complete.")
 
 

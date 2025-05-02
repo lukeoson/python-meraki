@@ -21,3 +21,7 @@ uv.lock
 # OS files
 .DS_Store
 Thumbs.db
+
+# Ignore all files in state/, but keep directory
+state/*
+!state/.gitkeep
