@@ -25,6 +25,7 @@ def main():
 
     # 🪵 Logging and Meraki session
     logger = logging.getLogger(__name__)
+    # ✅ Setup Meraki session (Meraki logs will use default naming with timestamps)
     dashboard = get_dashboard_session()
 
     # 🧠 Use backend abstraction to load configs
