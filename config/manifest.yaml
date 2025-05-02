@@ -24,12 +24,14 @@ devices: devices/devices.yaml
 # 🧱 Project-by-project declarations
 projects:
 
-  - name: Percy Street Production
+  - name: Percy Street
+    slug: percy_street
     org_base_name: Percy Street
     organization:
       tags: [studio, hub]
     networks:
       - base_name: Studio Hub
+        slug: studio_hub
         naming:
           building: percy
           room: studio
@@ -42,6 +44,7 @@ projects:
           fixed_assignments: projects/percy_street/fixed_ip_assignments.yaml
 
       - base_name: Studio Spoke
+        slug: studio_spoke
         naming:
           building: percy
           room: studio
@@ -50,24 +53,25 @@ projects:
           vlans: common/vlans.yaml
           firewall: common/firewall.yaml
 
-  - name: Remote Branch Expansion
-    org_base_name: Cloud Infra
-    networks:
-      - base_name: Branch One
-        naming:
-          building: remote1
-          room: rack
-          function: vpn
-        config:
-          vlans: common/vlans.yaml
-          firewall: common/firewall.yaml
-          fixed_assignments: projects/branch_remote/fixed_ip_assignments.yaml
-
-      - base_name: Branch Two
-        naming:
-          building: remote2
-          room: rack
-          function: vpn
-        config:
-          vlans: common/vlans.yaml
-          firewall: common/firewall.yaml
+#  - name: Remote Branch Expansion
+#    slug: branch_remote
+#    org_base_name: Cloud Infra
+#    networks:
+#      - base_name: Branch One
+#        naming:
+#          building: remote1
+#          room: rack
+#          function: vpn
+#        config:
+#          vlans: common/vlans.yaml
+#          firewall: common/firewall.yaml
+#          fixed_assignments: projects/branch_remote/fixed_ip_assignments.yaml
+#
+#      - base_name: Branch Two
+#        naming:
+#          building: remote2
+#          room: rack
+#          function: vpn
+#        config:
+#          vlans: common/vlans.yaml
+#          firewall: common/firewall.yaml

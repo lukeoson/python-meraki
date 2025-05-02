@@ -7,14 +7,19 @@ from meraki.exceptions import APIError
 logger = logging.getLogger(__name__)
 
 def claim_devices(dashboard, network_id, serials):
-    logger.info(f"Claiming devices to network {network_id}")
-    try:
-        dashboard.networks.claimNetworkDevices(network_id, serials=serials)
-        logger.info("✅ Devices claimed successfully.")
-    except APIError as e:
-        logger.error(f"❌ Failed to claim devices: {e}")
-    except Exception as e:
-        logger.error(f"❌ Unexpected error while claiming devices: {e}")
+    logger.info(f"🔍 Starting device claim to network {network_id}")
+    logger.debug(f"Serials to claim: {serials}")
+    for serial in serials:
+        try:
+            dashboard.networks.claimNetworkDevices(network_id, serials=[serial])
+            logger.info(f"✅ Claimed device {serial}")
+        except APIError as e:
+            if "already claimed" in str(e).lower():
+                logger.warning(f"⚠️ Device {serial} already claimed. Skipping.")
+            else:
+                logger.error(f"❌ Failed to claim {serial}: {e}")
+        except Exception as e:
+            logger.error(f"❌ Unexpected error for {serial}: {e}")
 
 def remove_devices_from_network(dashboard, network_id, devices):
     logger.info(f"🧹 Attempting to remove devices from network: {network_id}")
@@ -55,6 +60,13 @@ def generate_device_names(devices, naming_config):
     Names are of the format CITY-BUILDING-ROOM-FUNCTION-TYPE-SEQ.
     Sequence is per device type (e.g., MX-01, MX-02).
     """
+
+    # 🔒 Runtime check to fail early if naming fields are missing
+    required_keys = ["city", "building", "room", "function"]
+    missing = [k for k in required_keys if k not in naming_config]
+    if missing:
+        raise KeyError(f"❌ Missing naming fields: {', '.join(missing)}")
+
     type_counters = {}
     named_devices = []
 

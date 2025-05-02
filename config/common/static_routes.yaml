@@ -1,0 +1,26 @@
+# config/common/static_routes.yaml
+#
+# 🛣️ Static Route Definitions
+#
+# Each entry defines a static route to be pushed to the MX.
+# Use these for routing traffic to non-Meraki VPNs, remote sites,
+# or specific gateways within your LAN.
+#
+# Fields:
+# - name:        Description of the route
+# - subnet:      Target CIDR block
+# - gatewayIp:   Next-hop IP (must be in a local VLAN subnet)
+# - ipVersion:   "ipv4" or "ipv6"
+# - active:      Boolean flag for route activation
+
+- name: Route to Fake AWS VPN
+  subnet: 10.100.0.0/16
+  gatewayIp: 10.10.10.2
+  ipVersion: ipv4
+  active: true
+
+- name: Route to Fake Lab
+  subnet: 10.200.0.0/16
+  gatewayIp: 10.10.10.3
+  ipVersion: ipv4
+  active: true

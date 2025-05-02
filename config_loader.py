@@ -1,19 +1,35 @@
 import os
-import json
+import yaml
 
 CONFIG_DIR = "config"
 
-def load_config_file(file_name):
-    path = os.path.join(CONFIG_DIR, file_name)
+def load_yaml_file(path):
     with open(path, "r") as f:
-        return json.load(f)
+        return yaml.safe_load(f)
+
+def load_common_file(relative_path):
+    path = os.path.join(CONFIG_DIR, "common", relative_path)
+    return load_yaml_file(path)
+
+def load_project_file(relative_path):
+    path = os.path.join(CONFIG_DIR, "projects", relative_path)
+    return load_yaml_file(path)
+
+def load_devices_file():
+    path = os.path.join(CONFIG_DIR, "devices", "devices.yaml")
+    return load_yaml_file(path)
+
+def load_manifest_file():
+    path = os.path.join(CONFIG_DIR, "manifest.yaml")
+    return load_yaml_file(path)
+
+def load_defaults_file():
+    path = os.path.join(CONFIG_DIR, "defaults.yaml")
+    return load_yaml_file(path)
 
 def load_all_configs():
     return {
-        "base": load_config_file("base.json"),
-        "vlans": load_config_file("vlans.json"),
-        "devices": load_config_file("devices.json"),
-        "mx_ports": load_config_file("ports/mx_ports.json"), 
-        "static_routes": load_config_file("static_routes.json"),
-        "firewall": load_config_file("firewall.json"),
+        "defaults": load_defaults_file(),
+        "manifest": load_manifest_file(),
+        "devices": load_devices_file(),
     }

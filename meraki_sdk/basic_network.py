@@ -1,4 +1,4 @@
-# meraki_sdk/network.py
+# meraki_sdk/network/basic_network.py
 import logging
 
 logger = logging.getLogger(__name__)

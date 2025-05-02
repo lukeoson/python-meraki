@@ -1,5 +1,3 @@
-# meraki_sdk/logging/summary.py
-
 import os
 import logging
 from collections import Counter
@@ -12,18 +10,18 @@ def log_deployment_summary(config, org_name, named_devices):
     """
     logger.info("📊 Summary of this deployment:")
 
-    # Device counts
-    device_types = [device["type"] for device in config["devices"]["devices"]]
+    # Extract device types from structured device names (e.g., ...-MX-01)
+    device_types = [device["name"].split("-")[-2] for device in named_devices]
     device_counter = Counter(device_types)
 
     logger.info(f"  1. 🏢 Organization '{org_name}' created.")
-    logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' created.")
+    logger.info(f"  2. 🌐 Network '{config['network']['name']}' created.")
 
     logger.info("  3. 📦 Devices claimed:")
     for device_type, count in device_counter.items():
         logger.info(f"     - {count}x {device_type}")
 
-    logger.info(f"  4. 🏷️ Devices named using template: {config['base']['naming']['template']}")
+    logger.info(f"  4. 🏷️ Devices named using template: {config['naming']['template']}")
     for device in named_devices:
         logger.info(f"     - {device['serial']} → {device['name']}")
 

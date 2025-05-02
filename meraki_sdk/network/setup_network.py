@@ -1,4 +1,5 @@
 # meraki_sdk/network/setup_network.py
+
 import logging
 
 from meraki_sdk.network.vlans.mx import configure_mx_vlans
@@ -22,19 +23,25 @@ def setup_network(
     do_bgp=False,
 ):
     """
-    Configure network logical constructs: VLANs, ports, routes, firewall, VPN, OSPF, BGP.
+    Apply all logical Meraki network configuration:
+    - VLANs
+    - MX port profiles
+    - Static routes
+    - Firewall rules
+    - (Optional stubs for VPN, OSPF, BGP)
     """
-    # 1. VLANs
+
+    # 1. VLAN Configuration
     if do_vlans:
         logger.info("🌐 Configuring MX VLANs...")
         configure_mx_vlans(dashboard, network_id, config)
 
-        # 2. Ports (only after VLANs are on)
-        if do_ports and config.get("mx_ports"):
-            logger.info("🔌 Configuring MX ports...")
-            configure_mx_ports(dashboard, network_id, config["mx_ports"])
+    # 2. Port Profiles (must come after VLANs)
+    if do_ports and config.get("mx_ports"):
+        logger.info("🔌 Configuring MX ports...")
+        configure_mx_ports(dashboard, network_id, config["mx_ports"])
 
-    # 3. Static routes
+    # 3. Static Routes
     if do_static_routes and config.get("static_routes"):
         logger.info("🛣️ Configuring Static Routes...")
         configure_static_routes(dashboard, network_id, config["static_routes"])
@@ -58,7 +65,7 @@ def setup_network(
     else:
         logger.info("⚠️ No inbound firewall rules found, skipping.")
 
-    # 5. Future: VPN, OSPF, BGP
+    # 5. Not implemented yet
     if do_vpn:
         logger.info("🔐 VPN configuration not yet implemented.")
     if do_ospf:

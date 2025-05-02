@@ -47,7 +47,7 @@ groups:
         type: MT
         model: MT20
 
-  - tag: percy-remote-branch-one
+  - tag: percy-street-studio-spoke
     devices:
       - serial: Q2NY-XQ5P-DLZU
         type: MX

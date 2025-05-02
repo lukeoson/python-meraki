@@ -1,0 +1,41 @@
+# config/common/ports/mx_ports.yaml
+#
+# 📚 MX Port Configurations
+#
+# This file defines how MX device ports are configured.
+# Common fields like VLAN, PoE, access policy, etc., are centrally controlled using defaults.
+#
+# Structure:
+# - `defaults:` define common settings inherited by all ports unless overridden.
+# - Each `port:` can override specific fields like name, type, VLAN, PoE settings, etc.
+#
+# 💡 WAN ports typically override `type` and ignore VLAN.
+# 💡 LAN ports inherit defaults unless explicitly overridden.
+
+defaults: &port_defaults
+  name: "Internal"           # Default logical name for LAN ports
+  enabled: true              # Ports are enabled by default
+  type: access               # Access port (not trunk)
+  vlan: 20                   # Default VLAN (Internal VLAN)
+  dropUntaggedTraffic: false # Allow untagged traffic
+  poeEnabled: false          # PoE off by default
+  allowedVlans: "all"         # Only applies to trunk ports
+  accessPolicy: Open         # No authentication by default
+
+ports:
+  - portId: 1
+    name: "WAN 1"
+    type: wan
+    enabled: true
+
+  - portId: 11
+    <<: *port_defaults
+    device-role: camera       # Optional metadata for our own logic
+    vlan: 10                  # Override to MGMT VLAN
+    poeEnabled: true
+
+  - portId: 12
+    <<: *port_defaults
+    device-role: cellular     # Optional metadata
+    vlan: 10                  # MGMT VLAN
+    poeEnabled: true
