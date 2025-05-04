@@ -98,6 +98,71 @@ def resolve_mx_static_routes(defaults, backend, project_overrides=None, resolved
 
     return {"routes": processed}
 
+# 🔥 Resolve MX firewall rules config from common + project overrides
+def resolve_firewall_rules(defaults, backend, project_overrides=None, resolved_vlans=None):
+    import logging
+    from copy import deepcopy
+    logger = logging.getLogger(__name__)
+
+    # Base structure with empty rule sets
+    config = {
+        "outbound_rules": [],
+        "inbound_rules": []
+    }
+
+    # 1️⃣ Inline fallback from defaults.yaml (rarely used)
+    if "firewall" in defaults:
+        config.update(defaults["firewall"])
+
+    # 2️⃣ Load shared firewall rules from backend (e.g. common/firewall/mx_firewall.yaml)
+    try:
+        common_config = backend.get_firewall_rules()
+        config.update(common_config)
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to load common firewall.yaml: {e}")
+
+    # 3️⃣ Project-specific overrides
+    if project_overrides:
+        override = project_overrides.get("firewall")
+        if override:
+            config.update(override)
+
+    # 4️⃣ Helper: convert VLAN(10) → actual subnet CIDR using resolved VLANs
+    def resolve_cidr(value):
+        if not isinstance(value, str) or "VLAN(" not in value:
+            return value  # nothing to resolve
+        for vlan in resolved_vlans or []:
+            cidr = vlan.get("subnet")
+            if not cidr:
+                continue
+            patterns = [f"VLAN({vlan['id']})", f"VLAN({vlan['name']})"]
+            for pat in patterns:
+                if pat in value:
+                    return value.replace(pat, cidr)
+        logger.warning(f"⚠️ Could not resolve VLAN reference in CIDR field: {value}")
+        return value  # fallback unchanged
+
+    # 5️⃣ Normalize each rule, resolving CIDRs only for inbound rules
+    def resolve_rule(rule, resolve_vlan_refs=True):
+        rule = deepcopy(rule)
+        if resolve_vlan_refs:
+            rule["srcCidr"] = resolve_cidr(rule.get("srcCidr", "any"))
+            rule["destCidr"] = resolve_cidr(rule.get("destCidr", "any"))
+        logger.debug(f"[FIREWALL] Resolved rule: {rule}")
+        return rule
+
+    # 6️⃣ Resolve rules: outbound can keep Meraki-native VLAN() syntax, inbound must resolve to CIDR
+    outbound = [resolve_rule(r, resolve_vlan_refs=False) for r in config.get("outbound_rules", [])]
+    inbound  = [resolve_rule(r, resolve_vlan_refs=True)  for r in config.get("inbound_rules", [])]
+
+    # 7️⃣ Final output
+    logger.info(f"🔥 Final resolved outbound rules: {outbound}")
+    logger.info(f"🔥 Final resolved inbound rules: {inbound}")
+
+    return {
+        "outbound_rules": outbound,
+        "inbound_rules": inbound
+    }
 # 📡 Resolve MX wireless config from common + project overrides
 def resolve_mx_wireless(defaults, backend, project_overrides=None):
     config = {"defaults": {}, "ssids": []}
@@ -225,7 +290,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
 
             # 📦 Merge remaining config blocks
             net_config["vlans"] = processed_vlans
-            net_config["firewall_rules"] = firewall_rules
+            net_config["firewall"] = resolve_firewall_rules(defaults, backend, project.get("overrides", {}), processed_vlans)
             net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, project.get("overrides", {}), processed_vlans)["routes"]
             logger.debug(f"[DEBUG] Resolved static routes for {full_tag}: {net_config['mx_static_routes']}")
             print(net_config["mx_static_routes"])

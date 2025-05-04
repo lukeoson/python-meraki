@@ -1,0 +1,34 @@
+# config/common/firewall/mx_firewall.yaml
+#
+# 🔥 Meraki Firewall Configuration (IPAM-resolved)
+#
+# This file defines L3 firewall rules applied to MX appliances.
+# Both outbound (egress) and inbound (inter-VLAN) rules are supported.
+#
+# ✏️ Structure:
+#   - outbound_rules: traffic leaving the MX to WAN or other VLANs
+#   - inbound_rules: traffic between VLANs (inter-VLAN)
+#
+# ✅ VLAN-based syntax supported: use VLAN({id}).* or VLAN({name}).*
+# ✅ Use "any" for wildcard IPs or ports
+# ✅ syslogEnabled controls whether to log matched flows
+
+outbound_rules:
+  - comment: Allow traffic to AWS from MGMT VLAN
+    policy: allow
+    protocol: tcp
+    srcPort: any
+    srcCidr: VLAN(10).*
+    destPort: "443"
+    destCidr: 10.100.0.0/16
+    syslogEnabled: false
+
+#inbound_rules:
+#  - comment: Allow HTTP inbound from MGMT to Internal
+#    policy: allow
+#    protocol: tcp
+#    srcPort: any
+#    srcCidr: VLAN(10).*
+#    destPort: "80"
+#    destCidr: VLAN(20).*
+#    syslogEnabled: false

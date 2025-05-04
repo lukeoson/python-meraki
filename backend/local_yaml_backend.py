@@ -20,7 +20,7 @@ class LocalYAMLBackend(BackendProvider):
         return self._load_yaml("common/vlans.yaml")
 
     def get_firewall_rules(self):
-        return self._load_yaml("common/firewall.yaml")
+        return self._load_yaml("common/firewall/mx_firewall.yaml")
 
     def get_mx_static_routes(self):
         return self._load_yaml("common/routes/mx_static.yaml")
