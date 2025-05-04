@@ -1,4 +1,4 @@
-# config/common/static_routes.yaml
+# config/common/routes/mx_static.yaml
 #
 # 🛣️ Static Route Definitions
 #
@@ -13,14 +13,11 @@
 # - ipVersion:   "ipv4" or "ipv6"
 # - active:      Boolean flag for route activation
 
-- name: Route to Fake AWS VPN
-  subnet: 10.100.0.0/16
-  gatewayIp: 10.10.10.2
-  ipVersion: ipv4
-  active: true
 
-- name: Route to Fake Lab
-  subnet: 10.200.0.0/16
-  gatewayIp: 10.10.10.3
-  ipVersion: ipv4
-  active: true
+routes:
+  - name: Route to Fake AWS VPN
+    subnet: 10.100.0.0/16     # 🧠 Destination network you want to route to
+    gatewayRef: mgmt          # 🧠 Name or ID of VLAN already resolved by IPAM
+    ipVersion: ipv4
+    active: true
+

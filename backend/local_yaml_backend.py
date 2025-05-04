@@ -22,8 +22,8 @@ class LocalYAMLBackend(BackendProvider):
     def get_firewall_rules(self):
         return self._load_yaml("common/firewall.yaml")
 
-    def get_static_routes(self):
-        return self._load_yaml("common/static_routes.yaml")
+    def get_mx_static_routes(self):
+        return self._load_yaml("common/routes/mx_static.yaml")
 
     def get_fixed_assignments(self, project_name):
         return self._load_yaml(f"projects/{project_name}/fixed_ip_assignments.yaml")
