@@ -56,6 +56,48 @@ def resolve_mx_ports(defaults, backend, project_overrides=None):
 
     return config
 
+# 📡 Resolve MX static routes config from common + project overrides
+def resolve_mx_static_routes(defaults, backend, project_overrides=None, resolved_vlans=None):
+    config = {"routes": []}
+
+    if "mx_static_routes" in defaults:
+        config["routes"] = defaults["mx_static_routes"]
+
+    try:
+        common_routes = backend.get_mx_static_routes()
+        config["routes"] = common_routes.get("routes", config["routes"])
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to load common mx_static_routes: {e}")
+
+    if project_overrides:
+        override_routes = project_overrides.get("mx_static_routes")
+        if override_routes:
+            config["routes"] = override_routes
+
+    # 🧠 Resolve gatewayRef → gatewayIp using resolved_vlans
+    processed = []
+    for route in config["routes"]:
+        route = deepcopy(route)
+        gw_ref = route.get("gatewayRef")
+
+        if gw_ref and not route.get("gatewayIp") and resolved_vlans:
+            gw_ref_str = str(gw_ref).lower()
+            matched = next(
+                (
+                    v for v in resolved_vlans
+                    if str(v.get("id")) == str(gw_ref) or str(v.get("name", "")).lower() == gw_ref_str
+                ),
+                None
+            )
+            if matched:
+                route["gatewayIp"] = matched["gatewayIp"]
+            else:
+                logger.warning(f"⚠️ Could not resolve gatewayRef '{gw_ref}' in route '{route.get('name', 'Unnamed')}'")
+
+        processed.append(route)
+
+    return {"routes": processed}
+
 # 📡 Resolve MX wireless config from common + project overrides
 def resolve_mx_wireless(defaults, backend, project_overrides=None):
     config = {"defaults": {}, "ssids": []}
@@ -108,7 +150,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
     vlans_raw = vlans_backend.get_vlans()
     base_vlans = vlans_raw.get("vlans", [])
     firewall_rules = firewall_backend.get_firewall_rules()
-    static_routes = static_routes_backend.get_static_routes()
+    static_routes = static_routes_backend.get_mx_static_routes()
     exclusions = exclusions_backend.get_exclusions()
 
     # 🧯 Setup shared IPAM allocator once for the entire config resolution process
@@ -184,7 +226,9 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
             # 📦 Merge remaining config blocks
             net_config["vlans"] = processed_vlans
             net_config["firewall_rules"] = firewall_rules
-            net_config["static_routes"] = static_routes
+            net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, project.get("overrides", {}), processed_vlans)["routes"]
+            logger.debug(f"[DEBUG] Resolved static routes for {full_tag}: {net_config['mx_static_routes']}")
+            print(net_config["mx_static_routes"])
             net_config["exclusions"] = exclusions
             net_config["fixed_assignments"] = fixed_ips
             net_config["mx_ports"] = resolve_mx_ports(defaults, backend, project.get("overrides", {}))

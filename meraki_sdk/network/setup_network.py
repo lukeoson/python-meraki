@@ -3,7 +3,7 @@
 import logging
 
 from meraki_sdk.network.vlans.mx import configure_mx_vlans
-from meraki_sdk.network.routing.static import configure_static_routes
+from meraki_sdk.network.routes.mx_static import configure_static_routes
 from meraki_sdk.network.ports.mx_ports import configure_mx_ports
 from meraki_sdk.network.firewall import configure_outbound_rules, configure_inbound_rules
 from meraki_sdk.network.wireless.mx_wireless import apply_mx_wireless
@@ -44,9 +44,9 @@ def setup_network(
         configure_mx_ports(dashboard, network_id, config["mx_ports"])
 
     # 3. Static Routes
-    if do_static_routes and config.get("static_routes"):
+    if do_static_routes and config.get("mx_static_routes"):
         logger.info("🛣️ Configuring Static Routes...")
-        configure_static_routes(dashboard, network_id, config["static_routes"])
+        configure_static_routes(dashboard, network_id, config["mx_static_routes"], config["vlans"])
     else:
         logger.info("⚠️ No static routes defined, skipping.")
 
