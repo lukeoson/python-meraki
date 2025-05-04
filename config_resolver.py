@@ -5,7 +5,7 @@ import logging
 from copy import deepcopy
 from ipam.allocator import IPAMAllocator
 from backend.router import get_backend_for
-from config_loader import load_common_file
+from config_loader import load_common_file, load_project_file
 
 CONFIG_DIR = "config"
 logger = logging.getLogger(__name__)
@@ -39,24 +39,46 @@ def flatten_devices(grouped):
 def resolve_mx_ports(defaults, backend, project_overrides=None):
     config = {"defaults": {}, "ports": []}
 
-    # Load from defaults
     if "mx_ports" in defaults:
         config["ports"] = defaults["mx_ports"]
 
-    # Merge common
     try:
-        ports_path = os.path.join("common", "ports", "mx_ports.yaml")
-        common_config = load_common_file("ports/mx_ports.yaml")
+        common_config = backend.get_mx_ports()  # ✅ Now uses the backend
         config["defaults"] = common_config.get("defaults", {})
         config["ports"] = common_config.get("ports", config["ports"])
     except Exception as e:
-        logger.warning(f"⚠️ Failed to load common mx_ports.yaml: {e}")
+        logger.warning(f"⚠️ Failed to load common mx_ports: {e}")
 
-    # Merge project-level override
     if project_overrides:
         override_ports = project_overrides.get("mx_ports")
         if override_ports:
             config["ports"] = override_ports
+
+    return config
+
+# 📡 Resolve MX wireless config from common + project overrides
+def resolve_mx_wireless(defaults, backend, project_overrides=None):
+    config = {"defaults": {}, "ssids": []}
+
+    # 1. Start with inline defaults fallback (rarely used, but keeps interface clean)
+    if "mx_wireless" in defaults:
+        config["ssids"] = defaults["mx_wireless"].get("ssids", [])
+
+    # 2. Load common config (same shape as mx_ports)
+    try:
+        common_config = backend.get_mx_wireless()
+        config["defaults"] = common_config.get("defaults", {})
+        config["ssids"] = common_config.get("ssids", config["ssids"])
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to load common mx_wireless.yaml: {e}")
+
+    # 3. Apply project-level override
+    if project_overrides:
+        override = project_overrides.get("mx_wireless")
+        if override:
+            config["ssids"] = override.get("ssids", config["ssids"])
+            if "defaults" in override:
+                config["defaults"].update(override["defaults"])
 
     return config
 
@@ -94,7 +116,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
     ipam_supernet = ipam_cfg.get("supernet")
     if not ipam_supernet:
         raise ValueError("❌ IPAM 'supernet' must be defined in defaults.yaml")
-    
+
     # 🧱 Preload reserved space before allocator is created
     reserved_blocks = ipam_cfg.get("reserved", [])
     for cidr in reserved_blocks:
@@ -161,12 +183,12 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
 
             # 📦 Merge remaining config blocks
             net_config["vlans"] = processed_vlans
-            mx_ports_config = resolve_mx_ports(defaults, backend, project.get("overrides", {}))
-            net_config["mx_ports"] = mx_ports_config
             net_config["firewall_rules"] = firewall_rules
             net_config["static_routes"] = static_routes
             net_config["exclusions"] = exclusions
             net_config["fixed_assignments"] = fixed_ips
+            net_config["mx_ports"] = resolve_mx_ports(defaults, backend, project.get("overrides", {}))
+            net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, project.get("overrides", {}))
 
             # ✅ Append fully merged network config
             resolved.append({

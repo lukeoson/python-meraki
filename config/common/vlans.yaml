@@ -31,6 +31,14 @@ vlans:
     id: 20
     name: Internal
 
+  - <<: *vlan_defaults
+    id: 30
+    name: IoT
+
+  - <<: *vlan_defaults
+    id: 40
+    name: Placeholder
+
   #- <<: *vlan_defaults
   #  id: 999
   #  name: Transit

@@ -36,3 +36,9 @@ class LocalYAMLBackend(BackendProvider):
 
     def get_defaults(self):
         return self._load_yaml("defaults.yaml")
+    
+    def get_mx_wireless(self):
+        return self._load_yaml("common/wireless/mx_wireless.yaml")
+    
+    def get_mx_ports(self):
+        return self._load_yaml("common/ports/mx_ports.yaml")

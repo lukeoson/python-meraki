@@ -6,6 +6,7 @@ from meraki_sdk.network.vlans.mx import configure_mx_vlans
 from meraki_sdk.network.routing.static import configure_static_routes
 from meraki_sdk.network.ports.mx_ports import configure_mx_ports
 from meraki_sdk.network.firewall import configure_outbound_rules, configure_inbound_rules
+from meraki_sdk.network.wireless.mx_wireless import apply_mx_wireless
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ def setup_network(
     do_ports=True,
     do_static_routes=True,
     do_firewall=True,
+    do_wireless=True,
     do_vpn=False,
     do_ospf=False,
     do_bgp=False,
@@ -64,8 +66,19 @@ def setup_network(
         configure_inbound_rules(dashboard, network_id, inbound_rules)
     else:
         logger.info("⚠️ No inbound firewall rules found, skipping.")
+    
+    # 5. MX Wireless (config["mx_wireless"])
+    if do_wireless:
+        wireless_config = config.get("mx_wireless", {})
+        if wireless_config.get("ssids"):
+            logger.info("📶 Configuring MX wireless SSIDs...")
+            apply_mx_wireless(dashboard, network_id, wireless_config)
+        else:
+            logger.info("⚠️ No SSID configuration found under 'mx_wireless', skipping.")
+    else:
+        logger.info("⚠️ Wireless configuration skipped (flag disabled).")
 
-    # 5. Not implemented yet
+    # 6. Not implemented yet
     if do_vpn:
         logger.info("🔐 VPN configuration not yet implemented.")
     if do_ospf:

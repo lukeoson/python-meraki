@@ -52,6 +52,7 @@ projects:
         config:
           vlans: common/vlans.yaml
           firewall: common/firewall.yaml
+          wireless: common/wireless/mx_wireless.yaml
 
 #  - name: Remote Branch Expansion
 #    slug: branch_remote

@@ -133,6 +133,10 @@ def main():
                 "base": config
             })
 
+            # Inject wireless context for MX68CW support
+            config["named_devices"] = named_devices
+            config["project_name"] = project_name
+
             setup_network(dashboard, network_id, config)
 
             # 📝 Save summary and full intended state for audit/debugging

@@ -37,4 +37,15 @@ def setup_devices(dashboard, network_id, inputs):
     set_device_names(dashboard, network_id, named_devices)
 
     logger.info("✅ Post-claim device configuration completed successfully.")
+
+    # 🧬 Enrich with Meraki API metadata
+    try:
+        full_device_list = dashboard.networks.getNetworkDevices(network_id)
+        serial_to_meta = {d["serial"]: d for d in full_device_list}
+        for device in named_devices:
+            meta = serial_to_meta.get(device["serial"], {})
+            device.update(meta)  # merge model, mac, etc. into device dict
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to enrich device metadata: {e}")
+
     return named_devices

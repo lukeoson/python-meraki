@@ -17,11 +17,11 @@
 groups:
   - tag: percy-street-studio-hub
     devices:
-      - serial: Q2QN-CHDD-MQ24
+      - serial: Q2NY-XQ5P-DLZU
         type: MX
-        model: MX65
+        model: MX68CW
         overrides:
-          notes: "Ground floor — primary MX."
+          notes: "Left in Cabinet — MX68 Auto VPN Hub."
       - serial: Q2JV-FTGL-UWU5
         type: MV
         model: MV72
@@ -49,12 +49,61 @@ groups:
 
   - tag: percy-street-studio-spoke
     devices:
-      - serial: Q2NY-XQ5P-DLZU
+      - serial: Q2QN-CHDD-MQ24
         type: MX
-        model: MX68CW
+        model: MX65
+        overrides:
+          notes: "Right in Cabinet — MX65 Auto VPN Spoke."
       - serial: Q2GV-XG96-DP9D
         type: MV
         model: MV12W
       - serial: Q2GV-YTTJ-AFC3
         type: MV
         model: MV12W
+
+
+
+#groups:
+#  - tag: percy-street-studio-hub
+#    devices:
+#      - serial: Q2QN-CHDD-MQ24
+#        type: MX
+#        model: MX65
+#        overrides:
+#          notes: "Ground floor — primary MX."
+#      - serial: Q2JV-FTGL-UWU5
+#        type: MV
+#        model: MV72
+#      - serial: Q2VY-69FH-2N6B
+#        type: MG
+#        model: MG21
+#      - serial: Q3CA-NGG7-PUWM
+#        type: MT
+#        model: MT10
+#      - serial: Q3CE-FKEU-39PL
+#        type: MT
+#        model: MT11
+#      - serial: Q3CB-3E8E-Z237
+#        type: MT
+#        model: MT12
+#      - serial: Q3CG-QW5B-987T
+#        type: MT
+#        model: MT14
+#      - serial: Q3CH-WMME-ACJY
+#        type: MT
+#        model: MT30
+#      - serial: Q3CC-BEXL-HEFG
+#        type: MT
+#        model: MT20
+#
+#  - tag: percy-street-studio-spoke
+#    devices:
+#      - serial: Q2NY-XQ5P-DLZU
+#        type: MX
+#        model: MX68CW
+#      - serial: Q2GV-XG96-DP9D
+#        type: MV
+#        model: MV12W
+#      - serial: Q2GV-YTTJ-AFC3
+#        type: MV
+#        model: MV12W
