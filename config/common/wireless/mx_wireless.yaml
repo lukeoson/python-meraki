@@ -1,0 +1,33 @@
+# config/common/wireless/mx_wireless.yaml
+#
+# 📶 MX Wireless SSID Configurations
+#
+# This file defines SSIDs to be configured on MX devices with wireless capability (e.g., MX68CW).
+#
+# Structure:
+# - `defaults:` define common settings inherited by all SSIDs unless overridden.
+# - Each `ssid:` can override specific fields like VLAN, auth mode, PSK, etc.
+#
+# 💡 Use `number:` to assign SSID slot (1–4 on MX).
+# 💡 `defaultVlanId` maps wireless clients to a VLAN in bridge mode or tags in NAT mode.
+
+defaults: &ssid_defaults
+  enabled: true
+  encryptionMode: "wpa"
+  wpaEncryptionMode: "WPA2 only"
+  visible: true
+
+ssids:
+  - number: 1
+    name: "Internal"
+    authMode: "psk"
+    psk: "${INTERNAL_PSK}"
+    defaultVlanId: 20
+    <<: *ssid_defaults
+
+  - number: 2
+    name: "IoT"
+    authMode: "psk"
+    psk: "${IOT_PSK}"
+    defaultVlanId: 30
+    <<: *ssid_defaults

@@ -1,0 +1,50 @@
+# config/defaults.yaml
+#
+# 🧰 Global Defaults — Applied to all orgs/networks unless overridden in project config.
+# These values reduce repetition and promote consistency.
+
+# 📦 Backend Provider (currently local only)
+#
+# All data (devices, VLANs, firewall rules, etc.) is read from local YAML files.
+# Advanced users can later enable hybrid or remote backends (e.g., NetBox, InfraHub).
+# To do this, add an `overrides` section under backend_providers.
+# backend_providers:
+#   default: local
+#   overrides:
+#     fixed_assignments: netbox
+#     devices: infrahub
+
+backend_providers:
+  default: local  # Uses backend/local_yaml_backend.py for all config sources
+
+
+# These defaults apply to all orgs/networks unless overridden by VLAN config
+ipam:
+  supernet: 10.0.0.0/8
+  allocation:
+    on_prem_prefix: 10    # for possible future use (unused for now)
+    network_prefix: 16    # each network gets a /16
+    vlan_prefix: 24       # each VLAN gets a /24 unless overridden
+  reserved:
+    - 10.0.0.0/13   # 10.0.0.0 → 10.7.255.255
+    - 10.8.0.0/14   # 10.8.0.0 → 10.11.255.255
+    - 10.12.0.0/14  # 10.12.0.0 → 10.15.255.255
+    - 10.16.0.0/15  # 10.16.0.0 → 10.17.255.255
+
+naming:
+  city: lon
+  template: "{city}-{building}-{room}-{function}-{type}"
+
+organization:
+  tags: [python-sdk]
+  notes: "Auto-created by Python SDK"
+
+network:
+  type: combined
+  time_zone: Europe/London
+  tags: [python-sdk]
+  notes: "Auto-created network"
+
+management_vlan:
+  name: MGMT
+  id: 10

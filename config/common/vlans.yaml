@@ -1,0 +1,46 @@
+# config/common/vlans.yaml
+#
+# 🌐 VLAN Configuration
+#
+# This file defines Layer 3 VLAN interfaces for a Meraki network.
+# IP addresses are dynamically assigned by the internal IPAM engine.
+# Only override subnets/gateway manually if needed.
+#
+# ⬇️ Use the `ipam` key to specify dynamic allocation hints.
+# Static subnet/gateway fields should be avoided unless you're bypassing IPAM.
+#
+# Shared defaults reduce config duplication across VLANs.
+
+# 🔁 Default settings reused across all VLANs
+defaults: &vlan_defaults
+  dhcpHandling: Run a DHCP server
+  dnsNameservers: upstream_dns
+  dhcpLeaseTime: 12 hours
+  reservedIpRanges: []
+  fixedIpAssignments: {}
+
+# 📡 VLAN definitions
+vlans:
+  - <<: *vlan_defaults
+    id: 10
+    name: MGMT
+    ipam:
+      cidr: /24   # Allow override per VLAN (e.g., /25 for tighter segments)
+
+  - <<: *vlan_defaults
+    id: 20
+    name: Internal
+
+  - <<: *vlan_defaults
+    id: 30
+    name: IoT
+
+  - <<: *vlan_defaults
+    id: 40
+    name: Placeholder
+
+  #- <<: *vlan_defaults
+  #  id: 999
+  #  name: Transit
+  #  ipam:
+  #    cidr: /30

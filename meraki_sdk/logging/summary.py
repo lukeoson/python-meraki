@@ -1,39 +1,37 @@
-# meraki_sdk/logging/summary.py
-
 import os
 import logging
 from collections import Counter
 
 logger = logging.getLogger(__name__)
 
-def log_deployment_summary(config, org_name, named_devices):
+def log_deployment_summary(config, org_name, named_devices, summary_filename=None):
     """
     Logs and saves a summary of the deployment.
     """
-    logger.info("📊 Summary of this deployment:")
+    logger.info("\U0001F4CA Summary of this deployment:")
 
-    # Device counts
-    device_types = [device["type"] for device in config["devices"]["devices"]]
+    # Extract device types from structured device names (e.g., ...-MX-01)
+    device_types = [device["name"].split("-")[-2] for device in named_devices]
     device_counter = Counter(device_types)
 
-    logger.info(f"  1. 🏢 Organization '{org_name}' created.")
-    logger.info(f"  2. 🌐 Network '{config['base']['network']['name']}' created.")
+    logger.info(f"  1. \U0001F3E2 Organization '{org_name}' created.")
+    logger.info(f"  2. \U0001F310 Network '{config['network']['name']}' created.")
 
-    logger.info("  3. 📦 Devices claimed:")
+    logger.info("  3. \U0001F4E6 Devices claimed:")
     for device_type, count in device_counter.items():
         logger.info(f"     - {count}x {device_type}")
 
-    logger.info(f"  4. 🏷️ Devices named using template: {config['base']['naming']['template']}")
+    logger.info(f"  4. \U0001F3F7️ Devices named using template: {config['naming']['template']}")
     for device in named_devices:
         logger.info(f"     - {device['serial']} → {device['name']}")
 
     # Build summary lines
     summary_lines = []
-    summary_lines.append("\n📜 VLAN and DHCP Summary:")
+    summary_lines.append("\n\U0001F4DC VLAN and DHCP Summary:")
     for vlan in config.get("vlans", []):
         summary_lines.append(f"    - VLAN {vlan.get('id')} ({vlan.get('name', 'Unnamed')}): {vlan.get('subnet')}")
 
-    summary_lines.append("\n📌 Fixed IP Assignments:")
+    summary_lines.append("\n\U0001F4CC Fixed IP Assignments:")
     for vlan in config.get("vlans", []):
         vlan_id = vlan.get("id")
         name = vlan.get("name", "Unnamed VLAN")
@@ -46,17 +44,17 @@ def log_deployment_summary(config, org_name, named_devices):
             summary_lines.append(f"    - VLAN {vlan_id} ({name}): No fixed IP assignments.")
 
     if config.get("static_routes"):
-        summary_lines.append("\n🛣️ Static Routes:")
+        summary_lines.append("\n\U0001F6A3️ Static Routes:")
         for route in config["static_routes"]:
             summary_lines.append(f"    - {route.get('name')}: {route.get('subnet')} via {route.get('gatewayIp', route.get('nextHopIp'))}")
 
     if config.get("firewall", {}).get("outbound_rules"):
-        summary_lines.append("\n🚪 Outbound Firewall Rules:")
+        summary_lines.append("\n\U0001F6AA Outbound Firewall Rules:")
         for rule in config["firewall"]["outbound_rules"]:
             summary_lines.append(f"    - {rule.get('comment', 'Unnamed Rule')}")
 
     if config.get("firewall", {}).get("inbound_rules"):
-        summary_lines.append("\n🚪 Inbound Firewall Rules:")
+        summary_lines.append("\n\U0001F6AA Inbound Firewall Rules:")
         for rule in config["firewall"]["inbound_rules"]:
             summary_lines.append(f"    - {rule.get('comment', 'Unnamed Rule')}")
 
@@ -64,14 +62,17 @@ def log_deployment_summary(config, org_name, named_devices):
     for line in summary_lines:
         logger.info(line)
 
-    # Save to file using org_name-based filename
-    deployment_num = org_name.split()[-1]  # example: 'Percy Street 155' → 155
+    # Save to file using safe filename format
     summary_folder = "logs/summary_log"
     os.makedirs(summary_folder, exist_ok=True)
-    summary_file = os.path.join(summary_folder, f"deployment_summary_percystreet{deployment_num}.txt")
 
-    with open(summary_file, "w") as f:
+    if summary_filename is None:
+        deployment_num = org_name.split()[-1]  # fallback logic
+        summary_filename = f"summary-percystreet{deployment_num}.log"
+
+    summary_path = os.path.join(summary_folder, summary_filename)
+    with open(summary_path, "w") as f:
         for line in summary_lines:
             f.write(line + "\n")
 
-    logger.info(f"📝 Deployment summary saved to {summary_file}")
+    logger.info(f"\U0001F4DD Deployment summary saved to {summary_path}")
