@@ -5,7 +5,7 @@ import logging
 from meraki_sdk.network.vlans.mx import configure_mx_vlans
 from meraki_sdk.network.routes.mx_static import configure_static_routes
 from meraki_sdk.network.ports.mx_ports import configure_mx_ports
-from meraki_sdk.network.firewall import configure_outbound_rules, configure_inbound_rules
+from meraki_sdk.network.firewall.mx_firewall import configure_outbound_rules, configure_inbound_rules
 from meraki_sdk.network.wireless.mx_wireless import apply_mx_wireless
 
 logger = logging.getLogger(__name__)
@@ -53,17 +53,20 @@ def setup_network(
     # 4. Firewall Rules
     firewall_config = config.get("firewall", {})
     
+    logger.debug(f"[DEBUG] Outbound Firewall Rules: {firewall_config.get('outbound_rules', [])}")
+    logger.debug(f"[DEBUG] Inbound Firewall Rules: {firewall_config.get('inbound_rules', [])}")
+    
     outbound_rules = firewall_config.get("outbound_rules", [])
     if outbound_rules:
         logger.info("🚪 Configuring Outbound Firewall Rules...")
-        configure_outbound_rules(dashboard, network_id, outbound_rules)
+        configure_outbound_rules(dashboard, network_id, outbound_rules, config["vlans"])
     else:
         logger.info("⚠️ No outbound firewall rules found, skipping.")
-
+    
     inbound_rules = firewall_config.get("inbound_rules", [])
     if inbound_rules:
         logger.info("🚪 Configuring Inbound Firewall Rules...")
-        configure_inbound_rules(dashboard, network_id, inbound_rules)
+        configure_inbound_rules(dashboard, network_id, inbound_rules, config["vlans"])
     else:
         logger.info("⚠️ No inbound firewall rules found, skipping.")
     
