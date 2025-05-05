@@ -1,29 +1,55 @@
 # Fixed IP Assignments
-# --------------------
-# Format:
-# VLAN_NAME:
-#   MAC_ADDRESS:
-#     ip: 10.x.x.x
-#     name: Device Friendly Name
-#     tags: [Tag1, Tag2]
+# ====================
+# This file defines per-network static MAC-to-IP mappings for Meraki DHCP reservations.
+# Each top-level key is a network slug (e.g. studio_hub), matching your manifest.
+# Each child key is a VLAN name (e.g. Internal, IoT).
+# Each MAC address maps to:
+#   - offset: integer offset from the start of the VLAN subnet
+#   - name: optional friendly label
+#   - tags: optional list of tags (for inventory or grouping)
+#
+# Defaults can be defined via YAML anchors to reduce repetition.
 
-# Example:
-# Internal:
-#   00:22:33:44:55:66:
-#     ip: 10.10.20.200
-#     name: Internal Device 1
-#     tags: [Internal, static]
+# 💾 Default tags (reused via <<: *defaults)
+defaults: &vlan_defaults
+  Internal: &internal_defaults
+    tags: [Internal, static]
+  IoT: &iot_defaults
+    tags: [iot, static]
 
-Internal:
-  00:22:33:44:55:66:
-    ip: 10.10.20.200
-    name: Internal Device 1
-    tags:
-      - Internal
-      - static
-  00:22:33:44:55:77:
-    ip: 10.10.20.201
-    name: Internal Device 2
-    tags:
-      - Internal
-      - static
+# 📡 Static IP Assignments per network
+studio_hub:
+  Internal:
+    '00:22:33:44:55:66':
+      offset: 20
+      name: Internal Device 1
+      <<: *internal_defaults
+
+    '00:22:33:44:55:77':
+      offset: 21
+      name: Internal Device 2
+      <<: *internal_defaults
+
+  IoT:
+    'AA:BB:CC:DD:EE:01':
+      offset: 20
+      name: IoT Sensor 1
+      <<: *iot_defaults
+
+    'AA:BB:CC:DD:EE:02':
+      offset: 21
+      name: IoT Sensor 2
+      <<: *iot_defaults
+
+studio_spoke:
+  Internal:
+    '00:11:22:33:44:55':
+      offset: 20
+      name: Internal Lab Device
+      <<: *internal_defaults
+
+  IoT:
+    'AA:AA:AA:AA:AA:AA':
+      offset: 20
+      name: Lab IoT Device
+      <<: *iot_defaults
