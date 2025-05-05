@@ -189,75 +189,120 @@ def resolve_mx_wireless(defaults, backend, project_overrides=None):
 
     return config
 
+# 📎 Resolve fixed IP assignments and inject into matching VLANs
+def resolve_fixed_assignments(fixed_assignments, resolved_vlans):
+    import logging
+    import ipaddress
+    from copy import deepcopy
+    logger = logging.getLogger(__name__)
+
+    # 1️⃣ Build quick lookup by VLAN name
+    vlan_map = {vlan["name"]: vlan for vlan in resolved_vlans}
+
+    # 2️⃣ Initialize each with an empty fixedIpAssignments field
+    for vlan in resolved_vlans:
+        vlan["fixedIpAssignments"] = {}
+
+    # 3️⃣ Assign IPs based on offset
+    for vlan_name, mac_map in fixed_assignments.items():
+        if vlan_name not in vlan_map:
+            logger.warning(f"⚠️ Fixed assignment references unknown VLAN '{vlan_name}'")
+            continue
+
+        target_vlan = vlan_map[vlan_name]
+        subnet = target_vlan.get("subnet")
+
+        if not subnet:
+            logger.warning(f"⚠️ VLAN '{vlan_name}' has no subnet — skipping fixed IPs.")
+            continue
+
+        net = ipaddress.ip_network(subnet)
+
+        for mac, entry in mac_map.items():
+            offset = entry.get("offset")
+            if offset is None:
+                logger.warning(f"⚠️ Missing offset for MAC {mac} in VLAN {vlan_name}")
+                continue
+
+            try:
+                ip = str(net[offset])
+            except Exception as e:
+                logger.error(f"❌ Invalid offset {offset} in subnet {subnet}: {e}")
+                continue
+
+            target_vlan["fixedIpAssignments"][mac] = {
+                "ip": ip,
+                "name": entry.get("name", ""),
+                "tags": entry.get("tags", []),
+            }
+
+    # ✅ Log final result
+    for vlan in resolved_vlans:
+        if vlan["fixedIpAssignments"]:
+            logger.info(f"📌 Fixed IPs for VLAN {vlan['name']}: {vlan['fixedIpAssignments']}")
+
+    return resolved_vlans
+
 # 🔧 Resolve and merge all config layers: defaults → org → network → device
 def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
-    # 📦 Determine backend resolver function (dynamic or fixed)
+    # 📦 Dynamic or injected backend resolver
     if backend is None:
         from backend.router import get_backend_for
     else:
         def get_backend_for(kind, _defaults=None):
             return backend
 
-    # 🗱️ Load all config fragments using backend abstraction
+    # 📥 Load config fragments
     defaults_backend = get_backend_for("defaults")
+    manifest_backend = get_backend_for("manifest", defaults_backend.get_defaults())
+    devices_backend = get_backend_for("devices", defaults_backend.get_defaults())
+    vlans_backend = get_backend_for("vlans", defaults_backend.get_defaults())
+    firewall_backend = get_backend_for("firewall_rules", defaults_backend.get_defaults())
+    static_routes_backend = get_backend_for("static_routes", defaults_backend.get_defaults())
+    exclusions_backend = get_backend_for("exclusions", defaults_backend.get_defaults())
+
     defaults = defaults_backend.get_defaults()
-
-    manifest_backend = get_backend_for("manifest", defaults)
-    devices_backend = get_backend_for("devices", defaults)
-    vlans_backend = get_backend_for("vlans", defaults)
-    firewall_backend = get_backend_for("firewall_rules", defaults)
-    static_routes_backend = get_backend_for("static_routes", defaults)
-    exclusions_backend = get_backend_for("exclusions", defaults)
-
     manifest = manifest_backend.get_manifest()
     raw_devices = devices_backend.get_devices()
-    devices = flatten_devices(raw_devices)
-    vlans_raw = vlans_backend.get_vlans()
-    base_vlans = vlans_raw.get("vlans", [])
-    firewall_rules = firewall_backend.get_firewall_rules()
-    static_routes = static_routes_backend.get_mx_static_routes()
+    base_vlans = vlans_backend.get_vlans().get("vlans", [])
     exclusions = exclusions_backend.get_exclusions()
 
-    # 🧯 Setup shared IPAM allocator once for the entire config resolution process
+    # 🧯 Setup shared IPAM allocator
     ipam_cfg = defaults.get("ipam", {})
     ipam_supernet = ipam_cfg.get("supernet")
     if not ipam_supernet:
         raise ValueError("❌ IPAM 'supernet' must be defined in defaults.yaml")
 
-    # 🧱 Preload reserved space before allocator is created
     reserved_blocks = ipam_cfg.get("reserved", [])
     for cidr in reserved_blocks:
-        ipaddress.ip_network(cidr, strict=False)  # validate early
+        ipaddress.ip_network(cidr, strict=False)  # validate
 
-    allocation = ipam_cfg.get("allocation", {})
-    try:
-        default_on_prem_prefix = int(allocation["on_prem_prefix"])
-        default_network_prefix = int(allocation["network_prefix"])
-        default_vlan_cidr = int(allocation["vlan_prefix"])
-    except KeyError as e:
-        raise ValueError(f"❌ Missing IPAM allocation setting: {e}")
+    alloc = ipam_cfg.get("allocation", {})
+    default_network_prefix = int(alloc["network_prefix"])
+    default_vlan_cidr = int(alloc["vlan_prefix"])
 
-    # ✅ Shared allocator — so subnets don’t overlap across networks
     allocator = IPAMAllocator(ipam_supernet, used_subnets=reserved_blocks)
-
+    devices = flatten_devices(raw_devices)
     resolved = []
 
     for project in manifest.get("projects", []):
         project_name = project["name"]
         org_base = project["org_base_name"]
-        fixed_ip_backend = get_backend_for("fixed_assignments", defaults)
         project_slug = project.get("slug") or project_name.lower().replace(" ", "_")
-        fixed_ips = fixed_ip_backend.get_fixed_assignments(project_slug)
+
+        # 🔁 Load all fixed IPs across all networks in this project
+        fixed_ip_backend = get_backend_for("fixed_assignments", defaults)
+        fixed_ips_by_network_slug = fixed_ip_backend.get_fixed_assignments(project_slug)
 
         for net in project.get("networks", []):
             net_base = net["base_name"]
-            network_slug = net.get("slug") or net_base.lower().replace(" ", "_")
+            network_slug = net.get("slug") or net_base.lower().replace(" ", "_")  # 👈 Static slug
             full_tag = f"{project_slug}-{network_slug}"
 
-            # 🧰 Allocate a fresh block for this network
+            # 🧰 Allocate fresh IPAM block
             network_block = allocator.allocate_network_block(default_network_prefix)
 
-            # 🦰 Start with full defaults, then layer on overrides
+            # 🦰 Start with defaults, apply org and naming overrides
             net_config = deepcopy(defaults)
             net_config["organization"] = merge_dicts(
                 net_config.get("organization", {}),
@@ -269,37 +314,35 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
                     net["naming"]
                 )
 
-            # 🌐 Dynamic IPAM logic: assign new subnets per VLAN
+            # 🌐 Allocate subnets per VLAN
             processed_vlans = []
             for vlan in base_vlans:
                 vlan = deepcopy(vlan)
                 cidr_hint = vlan.get("ipam", {}).get("cidr")
                 prefixlen = int(cidr_hint.strip("/")) if cidr_hint else default_vlan_cidr
 
-                logger.debug(f"[DEBUG] Allocating VLAN ID {vlan['id']} with prefix /{prefixlen} inside network block {network_block}")
-
-                # 🧠 If we're in /16 + /24 mode, use VLAN ID-based 3rd octet mapping
-                if default_network_prefix == 16 and prefixlen == 24:
-                    subnet = allocator.allocate_vlan_subnet(network_block, vlan_id=vlan["id"], prefixlen=prefixlen)
-                else:
-                    subnet = allocator.allocate_subnet(prefixlen)
+                logger.debug(f"[DEBUG] Allocating VLAN ID {vlan['id']} with prefix /{prefixlen} inside block {network_block}")
+                subnet = allocator.allocate_vlan_subnet(network_block, vlan_id=vlan["id"], prefixlen=prefixlen) \
+                         if default_network_prefix == 16 and prefixlen == 24 \
+                         else allocator.allocate_subnet(prefixlen)
 
                 vlan["subnet"] = subnet
                 vlan["gatewayIp"] = str(ipaddress.ip_network(subnet)[1])
                 processed_vlans.append(vlan)
 
-            # 📦 Merge remaining config blocks
+            # 📎 Inject fixed IPs (only for this static network_slug)
+            network_fixed_ips = fixed_ips_by_network_slug.get(network_slug, {})
+            processed_vlans = resolve_fixed_assignments(network_fixed_ips, processed_vlans)
+
+            # 📦 Assemble full config
             net_config["vlans"] = processed_vlans
             net_config["firewall"] = resolve_firewall_rules(defaults, backend, project.get("overrides", {}), processed_vlans)
             net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, project.get("overrides", {}), processed_vlans)["routes"]
-            logger.debug(f"[DEBUG] Resolved static routes for {full_tag}: {net_config['mx_static_routes']}")
-            print(net_config["mx_static_routes"])
             net_config["exclusions"] = exclusions
-            net_config["fixed_assignments"] = fixed_ips
+            net_config["fixed_assignments"] = network_fixed_ips
             net_config["mx_ports"] = resolve_mx_ports(defaults, backend, project.get("overrides", {}))
             net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, project.get("overrides", {}))
 
-            # ✅ Append fully merged network config
             resolved.append({
                 "project_name": project_name,
                 "org_base_name": org_base,
