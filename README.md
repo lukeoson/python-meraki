@@ -13,9 +13,13 @@ This tool creates new Meraki organizations and networks, claims devices, sets ne
 - 📍 Sets device addresses and places devices on maps
 - 🌐 Configures VLANs, DHCP, and reserved IP assignments
 - 🔌 Configures MX ports after VLANs are enabled
-- 🛣️ Creates static routes
+- 🛣️ Creates static routes`
+- 🔐 Sets firewall rules (outbound) via config
+- 🛰️ Supports VPN configuration (AutoVPN + IPsec peers)
+- 🧠 Dynamic runtime state tracking for org/network IDs
+- 🧾 Deployment summaries saved as JSON and human-readable logs
 - 🧹 Supports device removal from old networks (`--destroy`)
-- 📝 Saves full deployment summaries (named after the deployment number)
+- 📝 Saves structured logs and summaries to `logs/summary_log/
 - ⚙️ Modern dependency management using `pyproject.toml` + `uv`
 - 🧩 Modular code structure, fully separated between devices and logical network constructs
 
@@ -56,18 +60,26 @@ python main.py
 ```
 .
 ├── config/
-│   ├── base.json
-│   ├── devices.json
-│   ├── exclusion_rules.yaml
-│   ├── fixed_ip_assignments.yaml
-│   ├── ports/
-│   │   └── mx_ports.json
-│   ├── static_routes.json
-│   └── vlans.json
+│   ├── common/
+│   │   ├── exclusion_rules.yaml
+│   │   ├── firewall/
+│   │   ├── ports/
+│   │   ├── routes/
+│   │   ├── vlans.yaml
+│   │   └── wireless/
+│   ├── defaults.yaml
+│   ├── devices/
+│   ├── manifest.yaml
+│   └── projects/
+│       └── percy_street/
 ├── logs/
 │   ├── custom_logs/
 │   ├── meraki_logs/
 │   └── summary_log/
+├── state/
+│   ├── actual_state/
+│   ├── intended_state/
+│   └── runtime.json
 ├── meraki_sdk/
 │   ├── auth.py
 │   ├── device.py
@@ -86,7 +98,8 @@ python main.py
 │   │   │   └── mx_ports.py
 │   │   ├── routing/
 │   │   │   └── static.py
-│   │   └── vpn.py
+│   │   └── firewall/
+│   │   │   └── firewall.py
 ├── main.py
 ├── config_loader.py
 ├── pyproject.toml
@@ -95,12 +108,11 @@ python main.py
 ```
 
 ## 🛤️ Roadmap
-- 🔥 Add Firewall rules automation
-- 📖 MkDocs site documentation
-- 🌐 Full VPN/OSPF/BGP configuration modules
-- 🧠 Smarter device exclusion and pre-checks
+- 🛰️ Expand VPN support.
+- ♻️ Idempotence
+- 📖 Documentation
+- 🌐 More Modules
+- 🧠 Bigger Better Stronger
 
-## 🙌 Credits
 
-Built by Lukeoson,
-with Python, the Meraki SDK. Hacky!
+Built with Python, the Meraki SDK.

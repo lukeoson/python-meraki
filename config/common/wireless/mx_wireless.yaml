@@ -21,7 +21,7 @@ ssids:
   - number: 1
     name: "Lukeoson-Internal"
     authMode: "psk"
-    psk: "${INTERNAL_PSK}"
+    psk: "Lukeoson-Internal"
     defaultVlanId: 20
     <<: *ssid_defaults
 
@@ -30,4 +30,11 @@ ssids:
     authMode: "psk"
     psk: "Lukeoson-IoT"
     defaultVlanId: 30
+    <<: *ssid_defaults
+
+  - number: 3
+    name: "Lukeoson-Guest"
+    authMode: "psk"
+    psk: "Lukeoson-Guest"
+    defaultVlanId: 40
     <<: *ssid_defaults

@@ -28,14 +28,39 @@ ports:
     type: wan
     enabled: true
 
+  - portId: 2
+    name: "WAN 2"
+    type: wan
+    enabled: true
+
+  - portId: 3
+    <<: *port_defaults
+    device-role: server   # Optional metadata for our own logic     
+    vlan: 20                  
+
+  - portId: 4
+    <<: *port_defaults
+    device-role: server     
+    vlan: 20                  
+
+  - portId: 5
+    <<: *port_defaults
+    device-role: server     
+    vlan: 20                  
+
+  - portId: 6
+    <<: *port_defaults
+    device-role: server     
+    vlan: 20                  
+
   - portId: 11
     <<: *port_defaults
-    device-role: server     # Optional metadata for our own logic
+    device-role: server     
     vlan: 20                 
     poeEnabled: true
 
   - portId: 12
     <<: *port_defaults
-    device-role: server     # Optional metadata
+    device-role: server     
     vlan: 20                  
     poeEnabled: true
