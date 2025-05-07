@@ -1,4 +1,4 @@
-deployment_summaries = []
+deployment_summaries = {}
 import os
 import logging
 from collections import Counter
@@ -12,78 +12,29 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
     """
     logger.info("\U0001F4CA Summary of this deployment:")
 
-    # Extract device types from structured device names (e.g., ...-MX-01)
-    device_types = [device["name"].split("-")[-2] for device in named_devices]
-    device_counter = Counter(device_types)
+    summary_folder = "logs/summary_log"
+    os.makedirs(summary_folder, exist_ok=True)
 
-    logger.info(f"  1. \U0001F3E2 Organization '{org_name}' created.")
-    logger.info(f"  2. \U0001F310 Network '{config['network']['name']}' created.")
+    if summary_filename is None:
+        safe_org = org_name.lower().replace(" ", "").replace("-", "")
+        summary_filename = f"summary-{safe_org}.log"
 
-    logger.info("  3. \U0001F4E6 Devices claimed:")
-    for device_type, count in device_counter.items():
-        logger.info(f"     - {count}x {device_type}")
+    summary_path = os.path.join(summary_folder, summary_filename)
 
-    logger.info(f"  4. \U0001F3F7️ Devices named using template: {config['naming']['template']}")
-    for device in named_devices:
-        logger.info(f"     - {device['serial']} → {device['name']}")
-
-    # Build summary lines
-    summary_lines = []
-    summary_lines.append("\n\U0001F4DC VLAN and DHCP Summary:")
-    for vlan in config.get("vlans", []):
-        summary_lines.append(f"    - VLAN {vlan.get('id')} ({vlan.get('name', 'Unnamed')}): {vlan.get('subnet')}")
-
-    summary_lines.append("\n\U0001F4CC Fixed IP Assignments:")
-    for vlan in config.get("vlans", []):
-        vlan_id = vlan.get("id")
-        name = vlan.get("name", "Unnamed VLAN")
-        assignments = vlan.get("fixedIpAssignments", {})
-        if assignments:
-            summary_lines.append(f"    - VLAN {vlan_id} ({name}):")
-            for mac, details in assignments.items():
-                summary_lines.append(f"        {mac} → {details.get('ip')} ({details.get('name')})")
-        else:
-            summary_lines.append(f"    - VLAN {vlan_id} ({name}): No fixed IP assignments.")
-
-    if config.get("static_routes"):
-        summary_lines.append("\n\U0001F6A3️ Static Routes:")
-        for route in config["static_routes"]:
-            summary_lines.append(f"    - {route.get('name')}: {route.get('subnet')} via {route.get('gatewayIp', route.get('nextHopIp'))}")
-
-    if config.get("firewall", {}).get("outbound_rules"):
-        summary_lines.append("\n\U0001F6AA Outbound Firewall Rules:")
-        for rule in config["firewall"]["outbound_rules"]:
-            summary_lines.append(f"    - {rule.get('comment', 'Unnamed Rule')}")
-
-    if config.get("firewall", {}).get("inbound_rules"):
-        summary_lines.append("\n\U0001F6AA Inbound Firewall Rules:")
-        for rule in config["firewall"]["inbound_rules"]:
-            summary_lines.append(f"    - {rule.get('comment', 'Unnamed Rule')}")
-
-    # Live API Verification Summary
-    summary_lines.append("\n🔍 Live API Verification Summary:")
-
-    try:
-        network_id = config["network_id"]
-        live_network = dashboard.networks.getNetwork(network_id)
-        summary_lines.append(f"    - ✅ Network exists: {live_network['name']}")
-    except Exception as e:
-        summary_lines.append(f"    - ❌ Network verification failed: {str(e)}")
-
-    try:
-        live_vlans = dashboard.appliance.getNetworkApplianceVlans(network_id)
-        summary_lines.append(f"    - ✅ Found {len(live_vlans)} VLANs on network.")
-    except Exception as e:
-        summary_lines.append(f"    - ❌ VLANs verification failed: {str(e)}")
-
-    try:
-        live_ssids = dashboard.wireless.getNetworkWirelessSsids(network_id)
-        summary_lines.append(f"    - ✅ Found {len(live_ssids)} Wireless SSIDs.")
-    except Exception as e:
-        summary_lines.append(f"    - ❌ Wireless SSIDs verification failed: {str(e)}")
+    if not os.path.exists(summary_path):
+        header_lines = [
+            f"\n🧾 This file contains a full summary of the deployment actions taken for the Meraki organization '{org_name}'.",
+            f"   It includes configuration steps, device mappings, API verification checks, and VLAN/subnet information.",
+            f"\n🌍 Organization: {org_name}",
+            f"🏢 Networks in this organization will be listed below as they are deployed.",
+            "\n"
+        ]
+        with open(summary_path, "a") as f:
+            for line in header_lines:
+                f.write(line + "\n")
 
     # ======= Structured, user-readable summaries for each category =======
-    summary_lines.append("\n📡 Verified Configuration Overview:")
+    summary_lines = []
 
     # Org and Network
     summary_lines.append(f"    - ✅ Organization: {org_name}")
@@ -99,15 +50,33 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
     else:
         summary_lines.append("    - 📍 No location info available.")
 
-    # VLANs
-    summary_lines.append("    - 🌐 VLANs:")
-    for vlan in config.get("vlans", []):
-        summary_lines.append(f"        • VLAN {vlan['id']} '{vlan['name']}' → {vlan['subnet']}")
+    # Devices
+    summary_lines.append("    - 📦 Devices Claimed and Named:")
+    for device in named_devices:
+        summary_lines.append(f"        • {device['model']} {device['name']} — {device['serial']}")
 
     # Ports
     summary_lines.append("    - 🔌 MX Ports:")
     for port in config.get("mx_ports", {}).get("ports", []):
         summary_lines.append(f"        • Port {port['portId']} → VLAN {port.get('vlan', 'N/A')} ({port['type']})")
+
+    # VLANs
+    summary_lines.append("    - 🌐 VLANs:")
+    for vlan in config.get("vlans", []):
+        summary_lines.append(f"        • VLAN {vlan['id']} '{vlan['name']}' → {vlan['subnet']}")
+
+    # Fixed Assignments
+    summary_lines.append("    - 📌 Fixed IP Assignments:")
+    for vlan in config.get("vlans", []):
+        vlan_id = vlan.get("id")
+        name = vlan.get("name", "Unnamed VLAN")
+        assignments = vlan.get("fixedIpAssignments", {})
+        if assignments:
+            summary_lines.append(f"        • VLAN {vlan_id} ({name}):")
+            for mac, details in assignments.items():
+                summary_lines.append(f"            - {mac} → {details.get('ip')} ({details.get('name')})")
+        else:
+            summary_lines.append(f"        • VLAN {vlan_id} ({name}): No fixed IP assignments.")
 
     # Static Routes
     summary_lines.append("    - 🛣️ Static Routes:")
@@ -139,37 +108,46 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
     else:
         summary_lines.append("        • None configured")
 
-    # Devices
-    summary_lines.append("    - 📦 Devices Claimed and Named:")
-    for device in named_devices:
-        summary_lines.append(f"        • {device['model']} {device['name']} — {device['serial']}")
+    # Insert network header line before verified configuration overview
+    summary_lines.insert(0, f"\n📡 Network: {config['network']['name']} — Deployment Summary Begins")
+    summary_lines.append("")  # adds a blank line
+
+    summary_lines.append(f"\n✅ End of configuration summary for network '{config['network']['name']}'")
 
     # Log all lines
     for line in summary_lines:
         logger.info(line)
 
     # Save to file using safe filename format
-    summary_folder = "logs/summary_log"
-    os.makedirs(summary_folder, exist_ok=True)
-
-    if summary_filename is None:
-        deployment_num = org_name.split()[-1]  # fallback logic
-        summary_filename = f"summary-percystreet{deployment_num}.log"
-
-    summary_path = os.path.join(summary_folder, summary_filename)
-    with open(summary_path, "w") as f:
+    # Append to the summary file for the same org instead of overwriting
+    with open(summary_path, "a") as f:
         for line in summary_lines:
             f.write(line + "\n")
 
-    # Save summary as JSON
+    # Save summary as JSON, appending new networks under each org
     json_summary_path = os.path.join(summary_folder, summary_filename.replace(".log", ".json"))
-    with open(json_summary_path, "w") as jf:
-        json.dump({
+    # Try to load existing JSON, if present
+    if os.path.exists(json_summary_path):
+        try:
+            with open(json_summary_path, "r") as jf:
+                existing = json.load(jf)
+        except Exception:
+            existing = {}
+    else:
+        existing = {}
+    # Ensure structure: { "organization": org_name, "networks": [ ... ] }
+    if not existing or existing.get("organization") != org_name:
+        existing = {
             "organization": org_name,
-            "network": config.get("network", {}).get("name"),
-            "named_devices": named_devices,
-            "summary_lines": summary_lines
-        }, jf, indent=2)
+            "networks": []
+        }
+    existing["networks"].append({
+        "network": config.get("network", {}).get("name"),
+        "named_devices": named_devices,
+        "summary_lines": summary_lines
+    })
+    with open(json_summary_path, "w") as jf:
+        json.dump(existing, jf, indent=2)
     logger.info(f"\U0001F4BE JSON summary saved to {json_summary_path}")
 
     logger.info(f"\U0001F4DD Deployment summary saved to {summary_path}")
@@ -178,15 +156,31 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
 # === Deployment summary collection and printing ===
 
 def collect_deployment_summary(config, org_name, named_devices, summary_lines):
-    deployment_summaries.append({
-        "organization": org_name,
+    if org_name not in deployment_summaries:
+        deployment_summaries[org_name] = []
+    deployment_summaries[org_name].append({
         "network": config.get("network", {}).get("name", "Unknown Network"),
+        "org_id": config.get("org_id", "❌ Not Provided"),
+        "network_id": config.get("network_id", "❌ Not Provided"),
+        "device_count": len(named_devices),
         "summary_lines": summary_lines
     })
 
 def print_final_summary():
-    logger.info("\n📋 FINAL DEPLOYMENT SUMMARY")
-    for idx, entry in enumerate(deployment_summaries, 1):
-        logger.info(f"\n🔹 Deployment {idx}: {entry['organization']} / {entry['network']}")
-        for line in entry["summary_lines"]:
-            logger.info(line)
+    logger.info("📋 FINAL DEPLOYMENT SUMMARY\n")
+    logger.info("=" * 50)
+
+    for org_name, networks in deployment_summaries.items():
+        logger.info(f"🌍 Organization: {org_name}")
+        logger.info(f"🏢 {len(networks)} network(s) deployed:\n")
+        network_list_str = " & ".join([f"{i+1}: {n['network']}" for i, n in enumerate(networks)])
+        logger.info(f"📋 Networks Deployed: {network_list_str}\n")
+
+        for idx, entry in enumerate(networks, 1):
+            logger.info(f"🔹 Network: {entry['network']}")
+            logger.info(f"🌍 Org: {org_name}")
+            logger.info(f"🆔 Org ID: {entry.get('org_id', '❌ Not Provided')}")
+            logger.info(f"🆔 Network ID: {entry.get('network_id', '❌ Not Provided')}")
+            logger.info(f"📦 Devices: {entry.get('device_count', '0')} device(s) configured")
+            logger.info("-" * 50)
+            logger.info("")  # Blank line between networks

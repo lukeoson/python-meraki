@@ -5,6 +5,7 @@ from utils.logging.config import setup_logging
 from utils.logging.summary import log_deployment_summary
 from utils.logging.summary import collect_deployment_summary, print_final_summary
 from utils.state.config import save_intended_state
+from utils.state.runtime import save_runtime_state
 from meraki_sdk.auth import get_dashboard_session
 from meraki_sdk.basic_network import ensure_network
 from meraki_sdk.device import remove_devices_from_network
@@ -139,6 +140,12 @@ def main():
             # Inject wireless context for MX68CW support
             config["named_devices"] = named_devices
             config["project_name"] = project_name
+
+            # 💾 Save runtime org and network identifiers for external tools or reuse
+            save_runtime_state(org_id, org_name, network_id, config["network"]["name"])
+            # Store org_id and network_id in config for later retrieval/logging
+            config["org_id"] = org_id
+            config["network_id"] = network_id
 
             setup_network(dashboard, network_id, config)
 
