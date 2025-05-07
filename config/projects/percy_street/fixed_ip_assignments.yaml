@@ -20,36 +20,103 @@ defaults: &vlan_defaults
 # 📡 Static IP Assignments per network
 studio_hub:
   Internal:
-    '00:22:33:44:55:66':
+    'AE:FE:0A:01:73:EE':
       offset: 20
-      name: Internal Device 1
+      name: Apple M2 Max
       <<: *internal_defaults
 
-    '00:22:33:44:55:77':
+    '9C:E6:5E:C2:B3:EC':
       offset: 21
-      name: Internal Device 2
+      name: Apple iPad Pro 12.9-inch 3rd Generation
       <<: *internal_defaults
 
   IoT:
-    'AA:BB:CC:DD:EE:01':
-      offset: 20
-      name: IoT Sensor 1
+  #Apple Home Devices
+    'A8:51:AB:A1:95:BE':
+      offset: 11
+      name: Desk Apple TV 
       <<: *iot_defaults
 
-    'AA:BB:CC:DD:EE:02':
+    '34:FD:6A:29:B1:F2':
+      offset: 12
+      name: Mantle Apple TV
+      <<: *iot_defaults
+
+    'AC:BC:B5:D9:2A:65':
+      offset: 13
+      name: Left Cabinet Apple HomePod White
+      <<: *iot_defaults
+
+    'AC:BC:B5:DC:F6:45':
+      offset: 14
+      name: Right Cabinet Apple HomePod Black
+      <<: *iot_defaults
+
+    '4C:20:B8:DD:89:E1':
+      offset: 15
+      name: Middle Fireplace Apple HomePod Mini White
+      <<: *iot_defaults
+
+    '58:D3:49:1A:FB:CD':
+      offset: 16
+      name: Bedroom Apple HomePod Mini Black 01 (Left)
+      <<: *iot_defaults
+
+    'F4:43:F0:06:6D:CB':
+      offset: 17
+      name: Bedroom Apple HomePod Mini Black 02 (Right)
+      <<: *iot_defaults
+    
+  #Philips Hue Devices
+    'EC:B5:FA:85:A3:35':
+      offset: 18
+      name: Hue Hub
+      <<: *iot_defaults
+
+  #Meross Power & Thermostat Devices
+    '48:E1:E9:B1:F6:4B':
+      offset: 19
+      name: Left Cabinet Smart PDU 01
+      <<: *iot_defaults
+
+    '48:E1:E9:B1:F7:B8':
+      offset: 20
+      name: Right Cabinet Smart PDU 01 (Left)
+      <<: *iot_defaults
+    
+    '48:E1:E9:B1:FB:E6':
       offset: 21
-      name: IoT Sensor 2
+      name: Right Cabinet Smart PDU 02 (Right)
+      <<: *iot_defaults
+    
+    '48:E1:E9:B1:FA:5A':
+      offset: 22
+      name: Right Cabinet Smart PDU 03 (Middle Box)
+      <<: *iot_defaults
+
+    '48:E1:E9:9C:EA:89':
+      offset: 23
+      name: Smart Thermostat (Kitchen)
       <<: *iot_defaults
 
 studio_spoke:
   Internal:
-    '00:11:22:33:44:55':
+    'AA:AA:AA:AA:AA:AA':
       offset: 20
-      name: Internal Lab Device
+      name: Raspberry Pi5 01 (Placeholder)
+      <<: *internal_defaults
+    'BB:BB:BB:BB:BB:BB':
+      offset: 21
+      name: Raspberry Pi5 02 (Placeholder)
+      <<: *internal_defaults
+    'CC:CC:CC:CC:CC:CC':
+      offset: 22
+      name: Raspberry Pi5 03 (Placeholder)
       <<: *internal_defaults
 
   IoT:
-    'AA:AA:AA:AA:AA:AA':
-      offset: 20
-      name: Lab IoT Device
+  #Philips Hue Devices
+    'EC:B5:FA:85:A3:35':
+      offset: 23
+      name: Hue Hub (Placeholder)
       <<: *iot_defaults
