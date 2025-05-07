@@ -1,5 +1,3 @@
-# meraki_sdk/logging/state.py
-
 import os
 import json
 import datetime

@@ -1,4 +1,4 @@
-# meraki_sdk/logging_config.py
+# utils/logging_config.py
 import logging
 import coloredlogs
 import os

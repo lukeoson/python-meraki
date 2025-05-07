@@ -1,3 +1,4 @@
+deployment_summaries = []
 import os
 import logging
 from collections import Counter
@@ -172,3 +173,20 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
     logger.info(f"\U0001F4BE JSON summary saved to {json_summary_path}")
 
     logger.info(f"\U0001F4DD Deployment summary saved to {summary_path}")
+
+
+# === Deployment summary collection and printing ===
+
+def collect_deployment_summary(config, org_name, named_devices, summary_lines):
+    deployment_summaries.append({
+        "organization": org_name,
+        "network": config.get("network", {}).get("name", "Unknown Network"),
+        "summary_lines": summary_lines
+    })
+
+def print_final_summary():
+    logger.info("\n📋 FINAL DEPLOYMENT SUMMARY")
+    for idx, entry in enumerate(deployment_summaries, 1):
+        logger.info(f"\n🔹 Deployment {idx}: {entry['organization']} / {entry['network']}")
+        for line in entry["summary_lines"]:
+            logger.info(line)
