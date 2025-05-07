@@ -1,16 +1,18 @@
 import argparse
 import logging
 import os
+from utils.logging.config import setup_logging
+from utils.logging.summary import log_deployment_summary
+from utils.logging.summary import collect_deployment_summary, print_final_summary
+from utils.state.config import save_intended_state
+from utils.state.runtime import save_runtime_state
 from meraki_sdk.auth import get_dashboard_session
 from meraki_sdk.basic_network import ensure_network
 from meraki_sdk.device import remove_devices_from_network
 from meraki_sdk.devices import setup_devices
 from meraki_sdk.network.setup_network import setup_network
-from meraki_sdk.logging_config import setup_logging
-from meraki_sdk.logging.summary import log_deployment_summary
-from config_resolver import resolve_project_configs
 from meraki_sdk.org import get_next_sequence_name, get_previous_org
-from meraki_sdk.logging.intended_state import save_intended_state
+from config_resolver import resolve_project_configs
 
 # 💾 Use new backend abstraction layer
 from backend.local_yaml_backend import LocalYAMLBackend
@@ -42,6 +44,8 @@ def main():
     grouped = {}
     for entry in resolved_networks:
         grouped.setdefault(entry["org_base_name"], []).append(entry)
+
+    all_summaries = []
 
     # 🚀 Deploy each project/org
     for org_base, networks in grouped.items():
@@ -137,18 +141,32 @@ def main():
             config["named_devices"] = named_devices
             config["project_name"] = project_name
 
+            # 💾 Save runtime org and network identifiers for external tools or reuse
+            save_runtime_state(org_id, org_name, network_id, config["network"]["name"])
+            # Store org_id and network_id in config for later retrieval/logging
+            config["org_id"] = org_id
+            config["network_id"] = network_id
+
             setup_network(dashboard, network_id, config)
 
             # 📝 Save summary and full intended state for audit/debugging
             log_safe_name = org_name.lower().replace(" ", "").replace("-", "")
             summary_log_name = f"summary-{log_safe_name}.log"
-            log_deployment_summary(config, org_name, named_devices, summary_log_name)
+            summary_lines = [
+                f"🔹 Network: {config['network']['name']}",
+                f"🌍 Org: {org_name}",
+                f"📦 Devices: {len(named_devices)} device(s) configured"
+            ]
+            collect_deployment_summary(config, org_name, named_devices, summary_lines)
+            log_deployment_summary(config, org_name, named_devices, dashboard, summary_log_name)
 
             # 💾 Save intended state (JSON representation of this config)
             state_path = save_intended_state(config, org_name)
             logger.info(f"📦 Intended state saved to {state_path}")
 
             logger.info(f"✅ Deployment for {org_name} complete.")
+
+    print_final_summary()
 
 
 if __name__ == "__main__":
