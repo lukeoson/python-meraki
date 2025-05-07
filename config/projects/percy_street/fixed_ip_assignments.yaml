@@ -30,6 +30,16 @@ studio_hub:
       name: Apple iPad Pro 12.9-inch 3rd Generation
       <<: *internal_defaults
 
+    '2c:cf:67:27:03:b5':
+      offset: 30
+      name: Raspberry Pi5 PoE Hat Arch Linux
+      <<: *internal_defaults
+
+    '2c:cf:67:27:21:f0':
+      offset: 31
+      name: Raspberry Pi5 PoE Hat Red
+      <<: *internal_defaults
+
   IoT:
   #Apple Home Devices
     'A8:51:AB:A1:95:BE':
@@ -101,17 +111,17 @@ studio_hub:
 
 studio_spoke:
   Internal:
-    'AA:AA:AA:AA:AA:AA':
+    '2c:cf:67:27:01:b1':
       offset: 20
-      name: Raspberry Pi5 01 (Placeholder)
+      name: Raspberry Pi5 01 Ubuntu Linux
       <<: *internal_defaults
-    'BB:BB:BB:BB:BB:BB':
+    '2c:cf:67:27:18:65':
       offset: 21
-      name: Raspberry Pi5 02 (Placeholder)
+      name: Raspberry Pi5 02 Ubuntu Linux
       <<: *internal_defaults
-    'CC:CC:CC:CC:CC:CC':
+    'd8:3a:dd:f4:2d:a7':
       offset: 22
-      name: Raspberry Pi5 03 (Placeholder)
+      name: Raspberry Pi5 03 Ubuntu Linux
       <<: *internal_defaults
 
   IoT:

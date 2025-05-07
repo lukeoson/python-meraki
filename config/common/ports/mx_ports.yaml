@@ -30,12 +30,12 @@ ports:
 
   - portId: 11
     <<: *port_defaults
-    device-role: camera       # Optional metadata for our own logic
-    vlan: 10                  # Override to MGMT VLAN
+    device-role: server     # Optional metadata for our own logic
+    vlan: 20                 
     poeEnabled: true
 
   - portId: 12
     <<: *port_defaults
-    device-role: cellular     # Optional metadata
-    vlan: 10                  # MGMT VLAN
+    device-role: server     # Optional metadata
+    vlan: 20                  
     poeEnabled: true
