@@ -24,7 +24,6 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
     if not os.path.exists(summary_path):
         header_lines = [
             f"\n🧾 This file contains a full summary of the deployment actions taken for the Meraki organization '{org_name}'.",
-            f"   It includes configuration steps, device mappings, API verification checks, and VLAN/subnet information.",
             f"\n🌍 Organization: {org_name}",
             f"🏢 Networks in this organization will be listed below as they are deployed.",
             "\n"
@@ -166,9 +165,21 @@ def collect_deployment_summary(config, org_name, named_devices, summary_lines):
         "summary_lines": summary_lines
     })
 
+from datetime import datetime
+
 def print_final_summary():
     logger.info("📋 FINAL DEPLOYMENT SUMMARY\n")
     logger.info("=" * 50)
+
+    # Support for artifact logging
+    # Get first org and network for safe_org and timestamp
+    if deployment_summaries:
+        first_entry = next(iter(deployment_summaries.values()))[0]
+        safe_org = next(iter(deployment_summaries)).lower().replace(" ", "").replace("-", "")
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    else:
+        safe_org = "unknownorg"
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     for org_name, networks in deployment_summaries.items():
         logger.info(f"🌍 Organization: {org_name}")
@@ -184,3 +195,9 @@ def print_final_summary():
             logger.info(f"📦 Devices: {entry.get('device_count', '0')} device(s) configured")
             logger.info("-" * 50)
             logger.info("")  # Blank line between networks
+
+    logger.info("🗂️ Deployment artifacts saved:")
+    logger.info(f"💾 JSON summary saved to logs/summary_log/summary-{safe_org}.json")
+    logger.info(f"📝 Deployment summary saved to logs/summary_log/summary-{safe_org}.log")
+    logger.info(f"📦 Intended state saved to state/intended_state/intended-{safe_org}-{timestamp}.json")
+    logger.info("")
