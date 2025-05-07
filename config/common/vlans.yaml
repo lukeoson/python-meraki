@@ -37,7 +37,15 @@ vlans:
 
   - <<: *vlan_defaults
     id: 40
-    name: Placeholder
+    name: Guest
+  
+  - <<: *vlan_defaults
+    id: 50
+    name: Corp
+
+  - <<: *vlan_defaults
+    id: 90
+    name: Transit
 
   #- <<: *vlan_defaults
   #  id: 999

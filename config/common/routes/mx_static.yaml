@@ -15,7 +15,7 @@
 
 
 routes:
-  - name: Route to Fake AWS VPN
+  - name: Route to Fake VPN
     subnet: 10.100.0.0/16     # 🧠 Destination network you want to route to
     gatewayRef: mgmt          # 🧠 Name or ID of VLAN already resolved by IPAM
     ipVersion: ipv4

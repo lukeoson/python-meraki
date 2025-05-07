@@ -27,17 +27,17 @@ studio_hub:
 
     '9C:E6:5E:C2:B3:EC':
       offset: 21
-      name: Apple iPad Pro 12.9-inch 3rd Generation
+      name: Apple iPad Pro 12.9
       <<: *internal_defaults
 
     '2c:cf:67:27:03:b5':
       offset: 30
-      name: Raspberry Pi5 PoE Hat Arch Linux
+      name: Pi5 PoE Hat Arch Linux
       <<: *internal_defaults
 
     '2c:cf:67:27:21:f0':
       offset: 31
-      name: Raspberry Pi5 PoE Hat Red
+      name: Pi5 PoE Hat Red
       <<: *internal_defaults
 
   IoT:
@@ -54,74 +54,74 @@ studio_hub:
 
     'AC:BC:B5:D9:2A:65':
       offset: 13
-      name: Left Cabinet Apple HomePod White
+      name: Apple HomePod White
       <<: *iot_defaults
 
     'AC:BC:B5:DC:F6:45':
       offset: 14
-      name: Right Cabinet Apple HomePod Black
+      name: Apple HomePod Black
       <<: *iot_defaults
 
     '4C:20:B8:DD:89:E1':
       offset: 15
-      name: Middle Fireplace Apple HomePod Mini White
+      name: Apple HomePod Mini White
       <<: *iot_defaults
 
     '58:D3:49:1A:FB:CD':
       offset: 16
-      name: Bedroom Apple HomePod Mini Black 01 (Left)
+      name: Apple HomePod Mini Black 01
       <<: *iot_defaults
 
     'F4:43:F0:06:6D:CB':
       offset: 17
-      name: Bedroom Apple HomePod Mini Black 02 (Right)
+      name: Apple HomePod Mini Black 02
       <<: *iot_defaults
     
   #Philips Hue Devices
     'EC:B5:FA:85:A3:35':
       offset: 18
-      name: Hue Hub
+      name: Pillips Hue Hub
       <<: *iot_defaults
 
   #Meross Power & Thermostat Devices
     '48:E1:E9:B1:F6:4B':
       offset: 19
-      name: Left Cabinet Smart PDU 01
+      name: Cabinet PDU L01
       <<: *iot_defaults
 
     '48:E1:E9:B1:F7:B8':
       offset: 20
-      name: Right Cabinet Smart PDU 01 (Left)
+      name: Cabinet PDU L01
       <<: *iot_defaults
     
     '48:E1:E9:B1:FB:E6':
       offset: 21
-      name: Right Cabinet Smart PDU 02 (Right)
+      name: Cabinet PDU R02
       <<: *iot_defaults
     
     '48:E1:E9:B1:FA:5A':
       offset: 22
-      name: Right Cabinet Smart PDU 03 (Middle Box)
+      name: Cabinet PDU M03
       <<: *iot_defaults
 
     '48:E1:E9:9C:EA:89':
       offset: 23
-      name: Smart Thermostat (Kitchen)
+      name: Thermostat
       <<: *iot_defaults
 
 studio_spoke:
   Internal:
     '2c:cf:67:27:01:b1':
       offset: 20
-      name: Raspberry Pi5 01 Ubuntu Linux
+      name: Pi5 01 Ubuntu Linux
       <<: *internal_defaults
     '2c:cf:67:27:18:65':
       offset: 21
-      name: Raspberry Pi5 02 Ubuntu Linux
+      name: Pi5 02 Ubuntu Linux
       <<: *internal_defaults
     'd8:3a:dd:f4:2d:a7':
       offset: 22
-      name: Raspberry Pi5 03 Ubuntu Linux
+      name: Pi5 03 Ubuntu Linux
       <<: *internal_defaults
 
   IoT:

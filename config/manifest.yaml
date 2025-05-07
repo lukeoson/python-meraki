@@ -53,6 +53,8 @@ projects:
           vlans: common/vlans.yaml
           firewall: common/firewall.yaml
           wireless: common/wireless/mx_wireless.yaml
+          mx_ports: common/ports/mx_ports.yaml
+          fixed_assignments: projects/percy_street/fixed_ip_assignments.yaml
 
 #  - name: Remote Branch Expansion
 #    slug: branch_remote
