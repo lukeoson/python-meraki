@@ -88,24 +88,32 @@ python main.py
 │   ├── network.py                 # Common utilities for Meraki networks
 │   ├── logging_config.py          # Custom logger setup
 │   ├── devices/                   # Device setup modules (naming, port configs)
-│   │   └── setup_devices.py
 │   ├── network/                   # Modules for logical network constructs
 │   │   ├── setup_network.py       # Main entrypoint to apply network settings
 │   │   ├── vlans/                 # VLAN logic: exclusions, fixed IPs, DHCP
-│   │   │   ├── mx.py
-│   │   │   ├── exclusions.py
-│   │   │   └── fixed_assignments.py
 │   │   ├── ports/                 # MX port assignment logic
-│   │   │   └── mx_ports.py
-│   │   ├── routing/               # Static route config
-│   │   │   └── static.py
-│   │   └── firewall/              # Firewall rule configuration
-│   │       └── firewall.py
-├── main.py                        # CLI entrypoint and workflow orchestrator
+│   │   ├── routes/                # Static route config
+│   │   ├── firewall/              # Firewall rule configuration
+│   │   ├── vpn/                   # VPN configuration (AutoVPN, IPsec)
+│   │   └── wireless/              # Wireless config logic
+├── utils/                         # Utility modules for state handling, logging, testing
+│   ├── logging/                   # Custom logging logic
+│   │   ├── config.py              # Logging config utilities
+│   │   └── summary.py             # Structured deployment summaries
+│   ├── state/                     # Runtime and config state handling
+│   │   ├── config.py              # Intended/actual state helpers
+│   │   └── runtime.py             # Persists runtime org/network metadata
+│   └── tests/                     # Unit test logic (WIP)
+├── backend/                       # Backend interface abstraction (local, NetBox etc.)
+├── ipam/                          # IPAM logic for subnet allocation
+├── docs/                          # Documentation and architecture notes
 ├── config_loader.py               # Loads YAML and prepares config structure
+├── config_resolver.py             # Merges and resolves project config
+├── main.py                        # CLI entrypoint and workflow orchestrator
 ├── pyproject.toml                 # Project metadata and dependencies
 ├── uv.lock                        # Locked dependency versions for reproducible installs
-└── tests/                         # Unit or integration tests (coming soon - NUTS)
+├── pytest.ini                     # Pytest configuration
+└── README.md                      # This file
 ```
 
 ## 🛤️ Roadmap
