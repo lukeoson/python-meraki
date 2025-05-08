@@ -48,9 +48,19 @@ def resolve_mx_ports(defaults, backend, project_overrides=None):
         logger.warning(f"⚠️ Failed to load common mx_ports: {e}")
 
     if project_overrides:
-        override_ports = project_overrides.get("mx_ports")
-        if override_ports:
-            config["ports"] = override_ports
+        override_path = project_overrides.get("mx_ports")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config["ports"] = override.get("ports", config["ports"])
+                    config["defaults"].update(override.get("defaults", {}))
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project mx_ports override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config["ports"] = override_path.get("ports", config["ports"])
+            config["defaults"].update(override_path.get("defaults", {}))
 
     return config
 
@@ -68,9 +78,17 @@ def resolve_mx_static_routes(defaults, backend, project_overrides=None, resolved
         logger.warning(f"⚠️ Failed to load common mx_static_routes: {e}")
 
     if project_overrides:
-        override_routes = project_overrides.get("mx_static_routes")
-        if override_routes:
-            config["routes"] = override_routes
+        override_path = project_overrides.get("mx_static_routes")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config["routes"] = override.get("routes", config["routes"])
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project mx_static_routes override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config["routes"] = override_path.get("routes", config["routes"])
 
     # 🧠 Resolve gatewayRef → gatewayIp using resolved_vlans
     processed = []
@@ -187,11 +205,19 @@ def resolve_mx_wireless(defaults, backend, project_overrides=None):
 
     # 3. Apply project-level override
     if project_overrides:
-        override = project_overrides.get("mx_wireless")
-        if override:
-            config["ssids"] = override.get("ssids", config["ssids"])
-            if "defaults" in override:
-                config["defaults"].update(override["defaults"])
+        override_path = project_overrides.get("mx_wireless")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config["ssids"] = override.get("ssids", config["ssids"])
+                    config["defaults"].update(override.get("defaults", {}))
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project mx_wireless override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config["ssids"] = override_path.get("ssids", config["ssids"])
+            config["defaults"].update(override_path.get("defaults", {}))
 
     return config
 
@@ -348,11 +374,11 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
                 net.get("config", {}),
                 processed_vlans
             )
-            net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, project.get("overrides", {}), processed_vlans)["routes"]
+            net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, net.get("config", {}), processed_vlans)["routes"]
             net_config["exclusions"] = exclusions
             net_config["fixed_assignments"] = network_fixed_ips
-            net_config["mx_ports"] = resolve_mx_ports(defaults, backend, project.get("overrides", {}))
-            net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, project.get("overrides", {}))
+            net_config["mx_ports"] = resolve_mx_ports(defaults, backend, net.get("config", {}))
+            net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, net.get("config", {}))
 
             resolved.append({
                 "project_name": project_name,
