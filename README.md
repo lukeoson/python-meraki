@@ -13,13 +13,13 @@ This tool creates new Meraki organizations and networks, claims devices, sets ne
 - 📍 Sets device addresses and places devices on maps
 - 🌐 Configures VLANs, DHCP, and reserved IP assignments
 - 🔌 Configures MX ports after VLANs are enabled
-- 🛣️ Creates static routes`
+- 🛣️ Creates static routes
 - 🔐 Sets firewall rules (outbound) via config
-- 🛰️ Supports VPN configuration (AutoVPN + IPsec peers)
+- 🛰️ Supports VPN configuration (AutoVPN + IPsec peers) - Coming Soon. 
 - 🧠 Dynamic runtime state tracking for org/network IDs
 - 🧾 Deployment summaries saved as JSON and human-readable logs
 - 🧹 Supports device removal from old networks (`--destroy`)
-- 📝 Saves structured logs and summaries to `logs/summary_log/
+- 📝 Saves structured logs and summaries to `logs/summary_log/`
 - ⚙️ Modern dependency management using `pyproject.toml` + `uv`
 - 🧩 Modular code structure, fully separated between devices and logical network constructs
 
@@ -57,54 +57,55 @@ python main.py
 | `--config`  | (future) Load an alternate config file |
 
 ## 🗂️ Project Structure
+
 ```
 .
-├── config/
-│   ├── common/
-│   │   ├── exclusion_rules.yaml
-│   │   ├── firewall/
-│   │   ├── ports/
-│   │   ├── routes/
-│   │   ├── vlans.yaml
-│   │   └── wireless/
-│   ├── defaults.yaml
-│   ├── devices/
-│   ├── manifest.yaml
-│   └── projects/
-│       └── percy_street/
-├── logs/
-│   ├── custom_logs/
-│   ├── meraki_logs/
-│   └── summary_log/
-├── state/
-│   ├── actual_state/
-│   ├── intended_state/
-│   └── runtime.json
-├── meraki_sdk/
-│   ├── auth.py
-│   ├── device.py
-│   ├── org.py
-│   ├── network.py
-│   ├── logging_config.py
-│   ├── devices/
+├── config/                        # All configuration files, separated by purpose
+│   ├── common/                    # Reusable config fragments shared across projects
+│   │   ├── exclusion_rules.yaml   # Rules to exclude devices or items from config
+│   │   ├── firewall/              # MX firewall rule configs
+│   │   ├── ports/                 # MX port configurations
+│   │   ├── routes/                # Static route definitions
+│   │   ├── vlans.yaml             # Default VLAN definitions
+│   │   └── wireless/              # Wireless SSID and settings configs
+│   ├── defaults.yaml              # Global defaults applied to all networks/orgs
+│   ├── devices/                   # Device inventory files
+│   ├── manifest.yaml              # Primary project manifest (declares orgs/networks)
+│   └── projects/                  # Project-specific overrides
+│       └── percy_street/          # Project folder with per-network overrides
+├── logs/                          # Logging output from deployments
+│   ├── custom_logs/               # User-defined log entries and custom flows
+│   ├── meraki_logs/               # Raw logs from Meraki SDK/API interactions
+│   └── summary_log/               # Human-readable and JSON deployment summaries
+├── state/                         # State tracking for intended vs actual deployments
+│   ├── actual_state/              # (planned) Actual state pulled from live API
+│   ├── intended_state/            # JSON dumps of what was intended per deployment
+│   └── runtime.json               # Captures org/network IDs during each run
+├── meraki_sdk/                    # Core automation logic for Meraki provisioning
+│   ├── auth.py                    # API key setup and auth session management
+│   ├── device.py                  # Core device management helpers
+│   ├── org.py                     # Functions to create/manage Meraki orgs
+│   ├── network.py                 # Common utilities for Meraki networks
+│   ├── logging_config.py          # Custom logger setup
+│   ├── devices/                   # Device setup modules (naming, port configs)
 │   │   └── setup_devices.py
-│   ├── network/
-│   │   ├── setup_network.py
-│   │   ├── vlans/
+│   ├── network/                   # Modules for logical network constructs
+│   │   ├── setup_network.py       # Main entrypoint to apply network settings
+│   │   ├── vlans/                 # VLAN logic: exclusions, fixed IPs, DHCP
 │   │   │   ├── mx.py
 │   │   │   ├── exclusions.py
 │   │   │   └── fixed_assignments.py
-│   │   ├── ports/
+│   │   ├── ports/                 # MX port assignment logic
 │   │   │   └── mx_ports.py
-│   │   ├── routing/
+│   │   ├── routing/               # Static route config
 │   │   │   └── static.py
-│   │   └── firewall/
-│   │   │   └── firewall.py
-├── main.py
-├── config_loader.py
-├── pyproject.toml
-├── uv.lock
-└── tests/
+│   │   └── firewall/              # Firewall rule configuration
+│   │       └── firewall.py
+├── main.py                        # CLI entrypoint and workflow orchestrator
+├── config_loader.py               # Loads YAML and prepares config structure
+├── pyproject.toml                 # Project metadata and dependencies
+├── uv.lock                        # Locked dependency versions for reproducible installs
+└── tests/                         # Unit or integration tests (coming soon - NUTS)
 ```
 
 ## 🛤️ Roadmap

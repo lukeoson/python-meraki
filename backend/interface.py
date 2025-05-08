@@ -21,10 +21,10 @@ class BackendProvider(ABC):
         """🔥 Returns L3 firewall rules for both inbound and outbound."""
         pass
 
-    #@abstractmethod
-    #def get_mx_static_routes(self):
-    #    """🛣️ Returns a list of static routes to be configured on the MX."""
-    #    pass
+    @abstractmethod
+    def get_mx_static_routes(self):
+        """🛣️ Returns a list of static routes to be configured on the MX."""
+        pass
 
     @abstractmethod
     def get_fixed_assignments(self, project_name):
