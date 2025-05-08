@@ -1,4 +1,4 @@
-# config/common/firewall/mx_firewall.yaml
+# config/project/percy_street//firewall/mx_firewall.yaml
 #
 # 🔥 Meraki Firewall Configuration (IPAM-resolved)
 #
@@ -14,9 +14,17 @@
 # ✅ syslogEnabled controls whether to log matched flows
 
 outbound_rules:
-  - comment: Allow traffic to ...Fake... from Transit VLAN
+  - comment: Allow traffic to ...Fake Project Level... from Transit VLAN
     policy: allow
     protocol: tcp
+    srcPort: any
+    srcCidr: VLAN(90).*
+    destPort: "443"
+    destCidr: 10.100.0.0/16
+    syslogEnabled: false
+  - comment: Allow traffic to ...Fake Project Level... from Transit VLAN
+    policy: allow
+    protocol: udp
     srcPort: any
     srcCidr: VLAN(90).*
     destPort: "443"
