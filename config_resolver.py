@@ -73,7 +73,7 @@ def resolve_mx_static_routes(defaults, backend, project_overrides=None, resolved
 
     try:
         common_routes = backend.get_mx_static_routes()
-        config["routes"] = common_routes.get("routes", config["routes"])
+        config["routes"] = common_routes.get("routes", []) + config["routes"]
     except Exception as e:
         logger.warning(f"⚠️ Failed to load common mx_static_routes: {e}")
 
@@ -84,11 +84,11 @@ def resolve_mx_static_routes(defaults, backend, project_overrides=None, resolved
                 full_path = os.path.join(CONFIG_DIR, override_path)
                 with open(full_path, "r") as f:
                     override = yaml.safe_load(f)
-                    config["routes"] = override.get("routes", config["routes"])
+                    config["routes"] += override.get("routes", [])
             except Exception as e:
                 logger.warning(f"⚠️ Failed to load project mx_static_routes override from '{override_path}': {e}")
         elif isinstance(override_path, dict):
-            config["routes"] = override_path.get("routes", config["routes"])
+            config["routes"] += override_path.get("routes", [])
 
     # 🧠 Resolve gatewayRef → gatewayIp using resolved_vlans
     processed = []

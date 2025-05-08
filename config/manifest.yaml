@@ -39,7 +39,7 @@ projects:
         config:
           vlans: common/vlans.yaml
           firewall: projects/percy_street/firewall/mx_firewall.yaml
-          static_routes: common/static_routes.yaml
+          mx_static_routes: projects/percy_street/routes/mx_static.yaml
           mx_ports: common/ports/mx_ports.yaml
           fixed_assignments: projects/percy_street/fixed_ip_assignments.yaml
 
@@ -51,7 +51,7 @@ projects:
           function: spoke
         config:
           vlans: common/vlans.yaml
-          firewall: common/firewall.yaml
+          firewall: common/firewall/mx_firewall.yaml
           wireless: common/wireless/mx_wireless.yaml
           mx_ports: common/ports/mx_ports.yaml
           fixed_assignments: projects/percy_street/fixed_ip_assignments.yaml
