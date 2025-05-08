@@ -4,8 +4,6 @@ import ipaddress
 import logging
 from copy import deepcopy
 from ipam.allocator import IPAMAllocator
-from backend.router import get_backend_for
-from config_loader import load_common_file, load_project_file
 
 CONFIG_DIR = "config"
 logger = logging.getLogger(__name__)
@@ -123,9 +121,17 @@ def resolve_firewall_rules(defaults, backend, project_overrides=None, resolved_v
 
     # 3️⃣ Project-specific overrides
     if project_overrides:
-        override = project_overrides.get("firewall")
-        if override:
-            config.update(override)
+        override_path = project_overrides.get("firewall")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config.update(override)
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project firewall override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config.update(override_path)
 
     # 4️⃣ Helper: convert VLAN(10) → actual subnet CIDR using resolved VLANs
     def resolve_cidr(value):
@@ -336,7 +342,12 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
 
             # 📦 Assemble full config
             net_config["vlans"] = processed_vlans
-            net_config["firewall"] = resolve_firewall_rules(defaults, backend, project.get("overrides", {}), processed_vlans)
+            net_config["firewall"] = resolve_firewall_rules(
+                defaults,
+                backend,
+                net.get("config", {}),
+                processed_vlans
+            )
             net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, project.get("overrides", {}), processed_vlans)["routes"]
             net_config["exclusions"] = exclusions
             net_config["fixed_assignments"] = network_fixed_ips
