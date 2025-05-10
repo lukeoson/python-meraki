@@ -14,7 +14,7 @@
 # ✅ syslogEnabled controls whether to log matched flows
 
 outbound_rules:
-  - comment: Allow traffic to ...Fake Project Level... from Transit VLAN
+  - comment: Allow traffic to ...Fake ... from Transit VLAN
     policy: allow
     protocol: tcp
     srcPort: any
@@ -22,7 +22,7 @@ outbound_rules:
     destPort: "443"
     destCidr: 10.100.0.0/16
     syslogEnabled: false
-  - comment: Allow traffic to ...Fake Project Level... from Transit VLAN
+  - comment: Allow traffic to ...Fake ... from Transit VLAN
     policy: allow
     protocol: udp
     srcPort: any

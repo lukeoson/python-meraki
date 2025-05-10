@@ -51,16 +51,37 @@ ports:
   - portId: 6
     <<: *port_defaults
     device-role: server     
+    vlan: 20  
+
+  - portId: 7
+    <<: *port_defaults
+    device-role: server     
     vlan: 20                  
+
+  - portId: 8
+    <<: *port_defaults
+    device-role: server     
+    vlan: 20                  
+
+  - portId: 9
+    <<: *port_defaults
+    device-role: server     
+    vlan: 20 
+
+  - portId: 10
+    <<: *port_defaults
+    device-role: server     
+    vlan: 20                 
+    poeEnabled: true                
 
   - portId: 11
     <<: *port_defaults
     device-role: server     
-    vlan: 20                 
+    vlan: 30                 
     poeEnabled: true
 
   - portId: 12
     <<: *port_defaults
     device-role: server     
-    vlan: 20                  
+    vlan: 40                  
     poeEnabled: true

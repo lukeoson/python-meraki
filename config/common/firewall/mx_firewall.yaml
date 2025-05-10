@@ -14,11 +14,11 @@
 # ✅ syslogEnabled controls whether to log matched flows
 
 outbound_rules:
-  - comment: Allow traffic to ...Fake... from Transit VLAN
+  - comment: Allow traffic to Fake from Transit VLAN
     policy: allow
     protocol: tcp
     srcPort: any
-    srcCidr: VLAN(90).*
+    srcCidr: VLAN(20).*
     destPort: "443"
     destCidr: 10.100.0.0/16
     syslogEnabled: false
