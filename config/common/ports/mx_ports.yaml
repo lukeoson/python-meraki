@@ -36,12 +36,12 @@ ports:
   - portId: 3
     <<: *port_defaults
     device-role: server   # Optional metadata for our own logic     
-    vlan: 20                  
+    vlan: 90                  
 
   - portId: 4
     <<: *port_defaults
     device-role: server     
-    vlan: 20                  
+    vlan: 60                  
 
   - portId: 5
     <<: *port_defaults
@@ -77,11 +77,11 @@ ports:
   - portId: 11
     <<: *port_defaults
     device-role: server     
-    vlan: 30                 
+    vlan: 60                 
     poeEnabled: true
 
   - portId: 12
     <<: *port_defaults
     device-role: server     
-    vlan: 40                  
+    vlan: 10                  
     poeEnabled: true
