@@ -4,8 +4,7 @@ import ipaddress
 import logging
 from copy import deepcopy
 from ipam.allocator import IPAMAllocator
-from backend.router import get_backend_for
-from config_loader import load_common_file, load_project_file
+from utils.state.runtime import load_runtime_state
 
 CONFIG_DIR = "config"
 logger = logging.getLogger(__name__)
@@ -50,9 +49,19 @@ def resolve_mx_ports(defaults, backend, project_overrides=None):
         logger.warning(f"⚠️ Failed to load common mx_ports: {e}")
 
     if project_overrides:
-        override_ports = project_overrides.get("mx_ports")
-        if override_ports:
-            config["ports"] = override_ports
+        override_path = project_overrides.get("mx_ports")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config["ports"] = override.get("ports", config["ports"])
+                    config["defaults"].update(override.get("defaults", {}))
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project mx_ports override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config["ports"] = override_path.get("ports", config["ports"])
+            config["defaults"].update(override_path.get("defaults", {}))
 
     return config
 
@@ -65,14 +74,22 @@ def resolve_mx_static_routes(defaults, backend, project_overrides=None, resolved
 
     try:
         common_routes = backend.get_mx_static_routes()
-        config["routes"] = common_routes.get("routes", config["routes"])
+        config["routes"] = common_routes.get("routes", []) + config["routes"]
     except Exception as e:
         logger.warning(f"⚠️ Failed to load common mx_static_routes: {e}")
 
     if project_overrides:
-        override_routes = project_overrides.get("mx_static_routes")
-        if override_routes:
-            config["routes"] = override_routes
+        override_path = project_overrides.get("mx_static_routes")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config["routes"] += override.get("routes", [])
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project mx_static_routes override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config["routes"] += override_path.get("routes", [])
 
     # 🧠 Resolve gatewayRef → gatewayIp using resolved_vlans
     processed = []
@@ -123,9 +140,17 @@ def resolve_firewall_rules(defaults, backend, project_overrides=None, resolved_v
 
     # 3️⃣ Project-specific overrides
     if project_overrides:
-        override = project_overrides.get("firewall")
-        if override:
-            config.update(override)
+        override_path = project_overrides.get("firewall")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config.update(override)
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project firewall override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config.update(override_path)
 
     # 4️⃣ Helper: convert VLAN(10) → actual subnet CIDR using resolved VLANs
     def resolve_cidr(value):
@@ -163,6 +188,89 @@ def resolve_firewall_rules(defaults, backend, project_overrides=None, resolved_v
         "outbound_rules": outbound,
         "inbound_rules": inbound
     }
+
+
+# 🔒 Resolve MX AutoVPN config from common + project-level overrides
+def resolve_mx_autovpn(backend, project_slug, network_slug, project_overrides, resolved_vlans, runtime):
+    logger = logging.getLogger(__name__)
+    result = {}
+
+    try:
+        common = backend.get_mx_autovpn_common()
+        project = backend.get_mx_autovpn_project(project_slug)
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to load AutoVPN config: {e}")
+        return {}
+
+    # Extract defaults
+    common_defaults = common.get("defaults", {})
+    project_defaults = project.get("defaults", {})
+
+    # Merge per-network config: common → project → final
+    merged_config = {}
+    common_net = common.get(network_slug, {})
+    project_net = project.get(network_slug, {})
+
+    merged_config = merge_dicts(common_defaults, common_net)
+    merged_config = merge_dicts(merged_config, project_defaults)
+    merged_config = merge_dicts(merged_config, project_net)
+
+    mode = merged_config.get("mode", "spoke").lower()
+    result["mode"] = mode
+
+    if mode == "hub":
+        # ✅ Still inject advertised subnets for hub
+        advertise_vlans = merged_config.get("advertise_vlans", [])
+        subnets = []
+        for vlan in resolved_vlans:
+            vlan_id = vlan.get("id")
+            vlan_name = vlan.get("name", "").upper()
+            if vlan_name in [str(x).upper() for x in advertise_vlans] or vlan_id in advertise_vlans:
+                subnets.append({
+                    "localSubnet": vlan["subnet"],
+                    "useVpn": True
+                })
+        result["subnets"] = subnets
+        return result
+
+    # Resolve hubSlug → hubId from runtime
+    hub_slug = merged_config.get("hub_slug")
+    if not hub_slug:
+        logger.error(f"❌ No 'hub_slug' defined for project '{project_slug}', network '{network_slug}'. Cannot resolve AutoVPN hub.")
+        return {}
+    try:
+        hub_id = runtime["projects"][project_slug]["networks"][hub_slug]["network_id"]
+        logger.info(f"🔗 Resolved hubSlug '{hub_slug}' to hubId '{hub_id}' for project '{project_slug}'")
+        logger.info(f"🔧 Injecting hubId '{hub_id}' into AutoVPN config for spoke network '{network_slug}'")
+        result["hubs"] = [{
+            "hubId": hub_id,
+            "useDefaultRoute": bool(merged_config.get("enable_default_route", False))
+        }]
+    except Exception as e:
+        logger.error(f"❌ Failed to resolve hubSlug '{hub_slug}' for project '{project_slug}' in runtime. Error: {e}")
+        logger.error(f"🔎 Runtime dump: {runtime.get('projects', {}).get(project_slug, {}).get('networks', {})}")
+        return {}
+
+    # Match VLANs by name or ID
+    advertise_vlans = merged_config.get("advertise_vlans", [])
+    subnets = []
+    for vlan in resolved_vlans:
+        vlan_id = vlan.get("id")
+        vlan_name = vlan.get("name", "").upper()
+        if vlan_name in [str(x).upper() for x in advertise_vlans] or vlan_id in advertise_vlans:
+            subnets.append({
+                "localSubnet": vlan["subnet"],
+                "useVpn": True
+            })
+
+    result["subnets"] = subnets
+
+    # Global NAT toggle
+    if merged_config.get("enable_nat", False):
+        result["subnet"] = {"nat": {"isAllowed": True}}
+
+    return result
+
 # 📡 Resolve MX wireless config from common + project overrides
 def resolve_mx_wireless(defaults, backend, project_overrides=None):
     config = {"defaults": {}, "ssids": []}
@@ -181,11 +289,19 @@ def resolve_mx_wireless(defaults, backend, project_overrides=None):
 
     # 3. Apply project-level override
     if project_overrides:
-        override = project_overrides.get("mx_wireless")
-        if override:
-            config["ssids"] = override.get("ssids", config["ssids"])
-            if "defaults" in override:
-                config["defaults"].update(override["defaults"])
+        override_path = project_overrides.get("mx_wireless")
+        if isinstance(override_path, str):
+            try:
+                full_path = os.path.join(CONFIG_DIR, override_path)
+                with open(full_path, "r") as f:
+                    override = yaml.safe_load(f)
+                    config["ssids"] = override.get("ssids", config["ssids"])
+                    config["defaults"].update(override.get("defaults", {}))
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load project mx_wireless override from '{override_path}': {e}")
+        elif isinstance(override_path, dict):
+            config["ssids"] = override_path.get("ssids", config["ssids"])
+            config["defaults"].update(override_path.get("defaults", {}))
 
     return config
 
@@ -267,6 +383,8 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
     base_vlans = vlans_backend.get_vlans().get("vlans", [])
     exclusions = exclusions_backend.get_exclusions()
 
+    runtime = {}
+
     # 🧯 Setup shared IPAM allocator
     ipam_cfg = defaults.get("ipam", {})
     ipam_supernet = ipam_cfg.get("supernet")
@@ -293,6 +411,18 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
         # 🔁 Load all fixed IPs across all networks in this project
         fixed_ip_backend = get_backend_for("fixed_assignments", defaults)
         fixed_ips_by_network_slug = fixed_ip_backend.get_fixed_assignments(project_slug)
+
+        # 🧠 Pre-populate runtime["projects"][project_slug]["networks"] for all networks in this project
+        for net in project.get("networks", []):
+            net_base = net["base_name"]
+            network_slug = net.get("slug") or net_base.lower().replace(" ", "_")
+            if "projects" not in runtime:
+                runtime["projects"] = {}
+            if project_slug not in runtime["projects"]:
+                runtime["projects"][project_slug] = {"networks": {}}
+            runtime["projects"][project_slug]["networks"][network_slug] = {
+                "network_id": net.get("network_id", "TBD")
+            }
 
         for net in project.get("networks", []):
             net_base = net["base_name"]
@@ -336,12 +466,29 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
 
             # 📦 Assemble full config
             net_config["vlans"] = processed_vlans
-            net_config["firewall"] = resolve_firewall_rules(defaults, backend, project.get("overrides", {}), processed_vlans)
-            net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, project.get("overrides", {}), processed_vlans)["routes"]
+            net_config["firewall"] = resolve_firewall_rules(
+                defaults,
+                backend,
+                net.get("config", {}),
+                processed_vlans
+            )
+            net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, net.get("config", {}), processed_vlans)["routes"]
             net_config["exclusions"] = exclusions
             net_config["fixed_assignments"] = network_fixed_ips
-            net_config["mx_ports"] = resolve_mx_ports(defaults, backend, project.get("overrides", {}))
-            net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, project.get("overrides", {}))
+            net_config["mx_ports"] = resolve_mx_ports(defaults, backend, net.get("config", {}))
+            net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, net.get("config", {}))
+            # 🧠 Track runtime network ID mapping for AutoVPN resolution (now handled above)
+            # runtime["projects"][project_slug]["networks"][network_slug] = {
+            #     "network_id": net.get("network_id", "TBD")  # use actual ID if available earlier
+            # }
+            net_config["mx_autovpn"] = resolve_mx_autovpn(
+                backend,
+                project_slug,
+                network_slug,
+                net.get("config", {}),
+                processed_vlans,
+                runtime=runtime
+            )
 
             resolved.append({
                 "project_name": project_name,
@@ -349,6 +496,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
                 "net_base_name": net_base,
                 "full_tag": full_tag,
                 "network_config": net_config,
+                "network_slug": network_slug,
             })
 
     return {

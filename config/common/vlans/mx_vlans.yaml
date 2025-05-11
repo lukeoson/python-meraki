@@ -44,6 +44,10 @@ vlans:
     name: Corp
 
   - <<: *vlan_defaults
+    id: 60
+    name: Security
+
+  - <<: *vlan_defaults
     id: 90
     name: Transit
 

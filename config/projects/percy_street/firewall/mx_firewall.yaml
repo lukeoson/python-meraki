@@ -1,4 +1,4 @@
-# config/common/firewall/mx_firewall.yaml
+# config/project/percy_street//firewall/mx_firewall.yaml
 #
 # 🔥 Meraki Firewall Configuration (IPAM-resolved)
 #
@@ -14,16 +14,24 @@
 # ✅ syslogEnabled controls whether to log matched flows
 
 outbound_rules:
-  - comment: Allow Common
+  - comment: Allow traffic to from Transit VLAN
     policy: allow
     protocol: tcp
     srcPort: any
-    srcCidr: VLAN(20).*
+    srcCidr: VLAN(90).*
+    destPort: "443"
+    destCidr: 10.100.0.0/16
+    syslogEnabled: false
+  - comment: Allow To From VLAN
+    policy: allow
+    protocol: udp
+    srcPort: any
+    srcCidr: VLAN(90).*
     destPort: "443"
     destCidr: 10.100.0.0/16
     syslogEnabled: false
 
-#inbound_rules:
+#inbound_rules: #ipv6
 #  - comment: Allow HTTP inbound from MGMT to Internal
 #    policy: allow
 #    protocol: tcp

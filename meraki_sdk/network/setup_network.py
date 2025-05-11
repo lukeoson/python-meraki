@@ -7,6 +7,7 @@ from meraki_sdk.network.routes.mx_static import configure_static_routes
 from meraki_sdk.network.ports.mx_ports import configure_mx_ports
 from meraki_sdk.network.firewall.mx_firewall import configure_outbound_rules, configure_inbound_rules
 from meraki_sdk.network.wireless.mx_wireless import apply_mx_wireless
+from meraki_sdk.network.vpn.mx_autovpn import configure_mx_autovpn
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def setup_network(
     do_static_routes=True,
     do_firewall=True,
     do_wireless=True,
-    do_vpn=False,
+    do_vpn=True,
     do_ospf=False,
     do_bgp=False,
 ):
@@ -70,7 +71,14 @@ def setup_network(
     else:
         logger.info("⚠️ No inbound firewall rules found, skipping.")
     
-    # 5. MX Wireless (config["mx_wireless"])
+    # 5. AutoVPN Configuration
+    if do_vpn and config.get("mx_autovpn"):
+        logger.info("🔒 Configuring AutoVPN...")
+        configure_mx_autovpn(dashboard, network_id, config["mx_autovpn"])
+    else:
+        logger.info("⚠️ No AutoVPN configuration found or VPN flag not enabled.")
+    
+    # 6. MX Wireless (config["mx_wireless"])
     if do_wireless:
         wireless_config = config.get("mx_wireless", {})
         if wireless_config.get("ssids"):
@@ -81,9 +89,7 @@ def setup_network(
     else:
         logger.info("⚠️ Wireless configuration skipped (flag disabled).")
 
-    # 6. Not implemented yet
-    if do_vpn:
-        logger.info("🔐 VPN configuration not yet implemented.")
+
     if do_ospf:
         logger.info("📡 OSPF configuration not yet implemented.")
     if do_bgp:

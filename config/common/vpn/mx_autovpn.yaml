@@ -1,0 +1,22 @@
+# config/common/vpn/mx_autovpn.yaml
+# 📡 Common AutoVPN Configuration
+#
+# This file defines default and per-network AutoVPN behavior.
+# Each network slug (e.g. "studio_spoke") must match a network defined in your manifest/runtime.
+# Configuration from this file will be merged with per-project VPN overrides if present.
+# Project-level config takes precedence on conflict.
+
+defaults: &autovpn_defaults
+  mode: spoke  # Can be 'spoke' or 'hub' - defines the VPN role of the device
+  enable_default_route: True  # Route all traffic to the hub (true/false)
+  use_vpn_vlans: true  # Pull eligible VLANs automatically from VLAN config
+  enable_nat: false  # Whether NAT translation is globally allowed
+  advertise_vlans: []  # Optional: list of VLAN names or IDs to advertise over VPN
+
+# ⬇️ Define AutoVPN settings for specific networks
+studio_spoke:
+  <<: *autovpn_defaults
+  hub_slug: studio_hub  # This will be resolved to a networkId via runtime.json
+  advertise_vlans:
+    - MGMT  # Example VLAN name (must match a defined VLAN)
+    - Internal  # Example VLAN name (must match a defined VLAN)

@@ -1,0 +1,28 @@
+# config/projects/percy_street/vpn/mx_autovpn.yaml
+# 🧩 Project-level AutoVPN Configuration
+#
+# This file allows project-specific overrides and extensions to the common AutoVPN config.
+# Settings here take precedence over those in config/common/vpn/mx_autovpn.yaml.
+# Use this to fine-tune VPN behavior for networks defined in this project.
+
+# 🔁 Default settings reused across networks in this project
+defaults: &project_autovpn_defaults
+  mode: spoke               # Default to 'spoke' role (can be overridden per network)
+  enable_default_route: True  # Route all internet-bound traffic to hub (true/false)
+  use_vpn_vlans: true       # Pull VPN-eligible VLANs from the resolved VLAN list
+  enable_nat: false         # Allow NAT translation globally
+  advertise_vlans:
+    - MGMT  
+    - Internal  
+    - Security 
+
+# 📡 Define a spoke network (must match a network slug in manifest/runtime)
+studio_spoke:
+  <<: *project_autovpn_defaults
+  hub_slug: studio_hub       # Reference to the hub network slug; resolved at runtime
+  enable_default_route: true # Override: enable full tunnel
+
+# 🏢 Define a hub network
+studio_hub:
+  <<: *project_autovpn_defaults
+  mode: hub                  # Only needs 'mode: hub' — no hub_slug or hubs[] needed

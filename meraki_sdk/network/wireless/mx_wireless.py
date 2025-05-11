@@ -16,6 +16,18 @@ def apply_mx_wireless(dashboard, network_id, config):
     defaults = config.get("defaults", {})
     ssids = config.get("ssids", [])
 
+    # Check for wireless-capable MX devices before proceeding
+    try:
+        devices = dashboard.networks.getNetworkDevices(network_id)
+        wireless_capable = any("MX68CW" in d.get("model", "") for d in devices)
+        if not wireless_capable:
+            models = [d.get("model", "Unknown") for d in devices if "MX" in d.get("model", "")]
+            logger.warning(f"⚠️ No wireless-capable MX device found in network {network_id}. Skipping wireless config as the following devices are not wireless capable: {', '.join(models)}.")
+            return
+    except Exception as e:
+        logger.error(f"❌ Failed to retrieve devices for wireless capability check: {e}")
+        return
+
     if not ssids:
         logger.warning(f"⚠️ No SSIDs defined in config for network {network_id}. Skipping.")
         return

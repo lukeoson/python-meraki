@@ -1,0 +1,77 @@
+# config/projects/percy-street/vlans/mx_vlans.yaml
+#
+# 🌐 MX VLAN Configuration
+#
+# This file defines Layer 3 VLAN interfaces for Meraki MX networks, scoped per network.
+# IP addresses are dynamically assigned by the internal IPAM engine.
+# Only override subnets/gateway manually if needed.
+#
+# Shared defaults reduce config duplication across VLANs.
+# Use the ipam key to override the default CIDR for specific VLANs. Each VLAN gets a /24 unless overridden.
+# Future: Add ms_vlans.yaml for MS switch-specific VLAN configs.
+
+defaults: &vlan_defaults
+  dhcpHandling: Run a DHCP server
+  dnsNameservers: upstream_dns
+  dhcpLeaseTime: 12 hours
+  reservedIpRanges: []
+  fixedIpAssignments: {}
+
+mx_vlans:
+  studio_hub:
+    - <<: *vlan_defaults
+      id: 10
+      name: MGMT
+      ipam:
+        cidr: /24
+
+    - <<: *vlan_defaults
+      id: 20
+      name: Internal
+
+    - <<: *vlan_defaults
+      id: 30
+      name: IoT
+
+    - <<: *vlan_defaults
+      id: 40
+      name: Guest
+
+    - <<: *vlan_defaults
+      id: 50
+      name: Corp
+
+    - <<: *vlan_defaults
+      id: 90
+      name: Transit
+      ipam:
+        cidr: /30
+      
+  studio_spoke:
+    - <<: *vlan_defaults
+      id: 10
+      name: MGMT
+      ipam:
+        cidr: /24
+
+    - <<: *vlan_defaults
+      id: 20
+      name: Internal
+
+    - <<: *vlan_defaults
+      id: 30
+      name: IoT
+
+    - <<: *vlan_defaults
+      id: 40
+      name: Guest
+
+    - <<: *vlan_defaults
+      id: 50
+      name: Corp
+
+    - <<: *vlan_defaults
+      id: 90
+      name: Transit
+      ipam:
+        cidr: /30

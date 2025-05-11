@@ -1,4 +1,4 @@
-# config/common/routes/mx_static.yaml
+# config/project/percy_street/routes/mx_static.yaml
 #
 # 🛣️ Static Route Definitions
 #
@@ -16,8 +16,12 @@
 
 routes:
   - name: Route to Fake VPN
-    subnet: 10.100.0.0/16     # 🧠 Destination network you want to route to
-    gatewayRef: internal          # 🧠 Name or ID of VLAN already resolved by IPAM
+    subnet: 10.101.0.0/16     # 🧠 Destination network you want to route to
+    gatewayRef: 20          # 🧠 Name or ID of VLAN already resolved by IPAM
+    ipVersion: 
+    active: true
+  - name: Route to Fake VPN
+    subnet: 10.102.0.0/16     # 🧠 Destination network you want to route to
+    gatewayRef: 20          # 🧠 Name or ID of VLAN already resolved by IPAM
     ipVersion: ipv4
     active: true
-
