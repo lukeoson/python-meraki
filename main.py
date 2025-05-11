@@ -51,11 +51,24 @@ def main():
     for org_base, networks in grouped.items():
         project_name = networks[0]["project_name"]
 
+        # 🔧 Initialize runtime state for this org
+        runtime_state = {
+            "project_slug": project_name,
+            "org": {
+                "org_id": None,
+                "org_name": None
+            },
+            "networks": {}
+        }
+
         # 🏢 Get all orgs and determine next available name
         orgs = dashboard.organizations.getOrganizations()
         org_name, next_seq = get_next_sequence_name(orgs, org_base)
         new_org = dashboard.organizations.createOrganization(name=org_name)
         org_id = new_org["id"]
+
+        runtime_state["org"]["org_id"] = org_id
+        runtime_state["org"]["org_name"] = org_name
 
         # ✅ Set up org-specific logging
         log_safe_name = org_name.lower().replace(" ", "").replace("-", "")
@@ -141,11 +154,30 @@ def main():
             config["named_devices"] = named_devices
             config["project_name"] = project_name
 
-            # 💾 Save runtime org and network identifiers for external tools or reuse
-            save_runtime_state(org_id, org_name, network_id, config["network"]["name"])
+            # 💾 Accumulate runtime state for this network
+            runtime_state["networks"][entry["network_slug"]] = {
+                "network_id": network_id,
+                "network_name": config["network"]["name"]
+            }
             # Store org_id and network_id in config for later retrieval/logging
             config["org_id"] = org_id
             config["network_id"] = network_id
+
+            save_runtime_state(
+                runtime_state["project_slug"],
+                runtime_state["org"]["org_id"],
+                runtime_state["org"]["org_name"],
+                runtime_state["networks"]
+            )
+
+            # 🧠 Resolve hubId for AutoVPN spoke configs
+            if "mx_autovpn" in config and config["mx_autovpn"].get("mode") == "spoke":
+                for hub in config["mx_autovpn"].get("hubs", []):
+                    if hub.get("hubId") == "TBD":
+                        hub_slug = config.get("mx_autovpn", {}).get("hub_slug", "studio_hub")
+                        resolved_hub_id = runtime_state["networks"].get(hub_slug, {}).get("network_id")
+                        logger.info(f"🔁 Resolving hubId for spoke VPN config: {hub_slug} -> {resolved_hub_id}")
+                        hub["hubId"] = resolved_hub_id
 
             setup_network(dashboard, network_id, config)
 

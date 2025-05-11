@@ -21,7 +21,7 @@ def setup_network(
     do_static_routes=True,
     do_firewall=True,
     do_wireless=True,
-    do_vpn=False,
+    do_vpn=True,
     do_ospf=False,
     do_bgp=False,
 ):

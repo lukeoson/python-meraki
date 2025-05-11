@@ -219,18 +219,36 @@ def resolve_mx_autovpn(backend, project_slug, network_slug, project_overrides, r
     result["mode"] = mode
 
     if mode == "hub":
-        return result  # no other fields needed
+        # ✅ Still inject advertised subnets for hub
+        advertise_vlans = merged_config.get("advertise_vlans", [])
+        subnets = []
+        for vlan in resolved_vlans:
+            vlan_id = vlan.get("id")
+            vlan_name = vlan.get("name", "").upper()
+            if vlan_name in [str(x).upper() for x in advertise_vlans] or vlan_id in advertise_vlans:
+                subnets.append({
+                    "localSubnet": vlan["subnet"],
+                    "useVpn": True
+                })
+        result["subnets"] = subnets
+        return result
 
     # Resolve hubSlug → hubId from runtime
     hub_slug = merged_config.get("hub_slug")
+    if not hub_slug:
+        logger.error(f"❌ No 'hub_slug' defined for project '{project_slug}', network '{network_slug}'. Cannot resolve AutoVPN hub.")
+        return {}
     try:
         hub_id = runtime["projects"][project_slug]["networks"][hub_slug]["network_id"]
+        logger.info(f"🔗 Resolved hubSlug '{hub_slug}' to hubId '{hub_id}' for project '{project_slug}'")
+        logger.info(f"🔧 Injecting hubId '{hub_id}' into AutoVPN config for spoke network '{network_slug}'")
         result["hubs"] = [{
             "hubId": hub_id,
             "useDefaultRoute": bool(merged_config.get("enable_default_route", False))
         }]
     except Exception as e:
-        logger.error(f"❌ Failed to resolve hubSlug '{hub_slug}' for project '{project_slug}': {e}")
+        logger.error(f"❌ Failed to resolve hubSlug '{hub_slug}' for project '{project_slug}' in runtime. Error: {e}")
+        logger.error(f"🔎 Runtime dump: {runtime.get('projects', {}).get(project_slug, {}).get('networks', {})}")
         return {}
 
     # Match VLANs by name or ID
@@ -365,7 +383,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
     base_vlans = vlans_backend.get_vlans().get("vlans", [])
     exclusions = exclusions_backend.get_exclusions()
 
-    runtime = load_runtime_state()
+    runtime = {}
 
     # 🧯 Setup shared IPAM allocator
     ipam_cfg = defaults.get("ipam", {})
@@ -393,6 +411,18 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
         # 🔁 Load all fixed IPs across all networks in this project
         fixed_ip_backend = get_backend_for("fixed_assignments", defaults)
         fixed_ips_by_network_slug = fixed_ip_backend.get_fixed_assignments(project_slug)
+
+        # 🧠 Pre-populate runtime["projects"][project_slug]["networks"] for all networks in this project
+        for net in project.get("networks", []):
+            net_base = net["base_name"]
+            network_slug = net.get("slug") or net_base.lower().replace(" ", "_")
+            if "projects" not in runtime:
+                runtime["projects"] = {}
+            if project_slug not in runtime["projects"]:
+                runtime["projects"][project_slug] = {"networks": {}}
+            runtime["projects"][project_slug]["networks"][network_slug] = {
+                "network_id": net.get("network_id", "TBD")
+            }
 
         for net in project.get("networks", []):
             net_base = net["base_name"]
@@ -447,6 +477,10 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
             net_config["fixed_assignments"] = network_fixed_ips
             net_config["mx_ports"] = resolve_mx_ports(defaults, backend, net.get("config", {}))
             net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, net.get("config", {}))
+            # 🧠 Track runtime network ID mapping for AutoVPN resolution (now handled above)
+            # runtime["projects"][project_slug]["networks"][network_slug] = {
+            #     "network_id": net.get("network_id", "TBD")  # use actual ID if available earlier
+            # }
             net_config["mx_autovpn"] = resolve_mx_autovpn(
                 backend,
                 project_slug,
@@ -462,6 +496,7 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
                 "net_base_name": net_base,
                 "full_tag": full_tag,
                 "network_config": net_config,
+                "network_slug": network_slug,
             })
 
     return {

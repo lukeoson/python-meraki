@@ -98,6 +98,27 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
     else:
         summary_lines.append("        • Outbound: None")
 
+    # AutoVPN
+    autovpn = config.get("mx_autovpn", {})
+    summary_lines.append("    - 🔐 AutoVPN Configuration:")
+    summary_lines.append(f"        • Mode: {autovpn.get('mode', '❌ Not Specified')}")
+    hubs = autovpn.get("hubs", [])
+    if autovpn.get("mode") == "spoke" and hubs:
+        summary_lines.append("        • Hubs:")
+        for hub in hubs:
+            summary_lines.append(f"            - Hub ID: {hub.get('hubId', '❌ Missing')} | Default Route: {hub.get('useDefaultRoute')}")
+    elif autovpn.get("mode") == "hub":
+        summary_lines.append("        • This network is acting as a VPN hub.")
+    else:
+        summary_lines.append("        • No hub configuration found.")
+
+    if autovpn.get("subnets"):
+        summary_lines.append("        • VPN-Enabled Subnets:")
+        for subnet in autovpn["subnets"]:
+            summary_lines.append(f"            - {subnet.get('localSubnet')} (Use VPN: {subnet.get('useVpn')})")
+    else:
+        summary_lines.append("        • No subnets configured for VPN.")
+
     # Wireless SSIDs
     ssids = config.get("mx_wireless", {}).get("ssids", [])
     summary_lines.append("    - 📶 Wireless SSIDs:")

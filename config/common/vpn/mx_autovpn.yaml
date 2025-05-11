@@ -8,7 +8,7 @@
 
 defaults: &autovpn_defaults
   mode: spoke  # Can be 'spoke' or 'hub' - defines the VPN role of the device
-  enable_default_route: false  # Route all traffic to the hub (true/false)
+  enable_default_route: True  # Route all traffic to the hub (true/false)
   use_vpn_vlans: true  # Pull eligible VLANs automatically from VLAN config
   enable_nat: false  # Whether NAT translation is globally allowed
   advertise_vlans: []  # Optional: list of VLAN names or IDs to advertise over VPN
@@ -19,4 +19,4 @@ studio_spoke:
   hub_slug: studio_hub  # This will be resolved to a networkId via runtime.json
   advertise_vlans:
     - MGMT  # Example VLAN name (must match a defined VLAN)
-    - GUEST
+    - Internal  # Example VLAN name (must match a defined VLAN)
