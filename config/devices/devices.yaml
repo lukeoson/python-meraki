@@ -25,6 +25,9 @@ groups:
       - serial: Q2JV-FTGL-UWU5
         type: MV
         model: MV72
+      - serial: Q2GV-YTTJ-AFC3
+        type: MV
+        model: MV12W
       - serial: Q2VY-69FH-2N6B
         type: MG
         model: MG21
@@ -57,9 +60,7 @@ groups:
       - serial: Q2GV-XG96-DP9D
         type: MV
         model: MV12W
-      - serial: Q2GV-YTTJ-AFC3
-        type: MV
-        model: MV12W
+
 
 
 

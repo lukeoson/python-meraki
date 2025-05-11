@@ -7,43 +7,42 @@ logger = logging.getLogger(__name__)
 
 def configure_mx_ports(dashboard, network_id, ports_config):
     """
-    Configure MX ports using the provided `ports_config` dict,
-    which should come from config["mx_ports"].
+    Configure MX ports using the provided `ports_config` list.
+    Each item should be a dict containing a fully resolved port configuration.
     """
     try:
-        defaults     = ports_config.get("defaults", {})
-        custom_ports = {p["portId"]: p for p in ports_config.get("ports", [])}
+        if not isinstance(ports_config, list):
+            logger.error(f"❌ Expected mx_ports to be a list, got {type(ports_config).__name__}")
+            return
 
         ports = dashboard.appliance.getNetworkAppliancePorts(network_id)
         logger.info(f"📥 Fetched {len(ports)} ports for network {network_id}.")
 
+        # Index provided config by portId for fast lookup
+        override_ports = {str(p["portId"]): p for p in ports_config if "portId" in p}
+
         for port in ports:
-            port_number = port.get("number")
-            if port_number is None:
-                logger.warning(f"⚠️ Skipping a port without a number: {port}")
+            port_number = str(port.get("number"))
+            if port_number not in override_ports:
+                logger.info(f"ℹ️ No override config for port {port_number}, skipping.")
                 continue
 
-            # Merge defaults + any per-port overrides
-            override    = custom_ports.get(port_number, {})
-            final_conf  = defaults.copy()
-            final_conf.update(override)
-
+            override = override_ports[port_number]
             payload = {}
-            # only set supported fields...
-            if "name"               in final_conf: payload["name"]               = final_conf["name"]
-            if "enabled"            in final_conf: payload["enabled"]            = final_conf["enabled"]
-            if "type"               in final_conf: payload["type"]               = final_conf["type"]
-            if "vlan"               in final_conf: payload["vlan"]               = final_conf["vlan"]
-            if "allowedVlans"       in final_conf and final_conf.get("type") == "trunk":
-                payload["allowedVlans"] = final_conf["allowedVlans"]
-            if "dropUntaggedTraffic" in final_conf:
-                payload["dropUntaggedTraffic"] = final_conf["dropUntaggedTraffic"]
-            if "poeEnabled"         in final_conf: payload["poeEnabled"]         = final_conf["poeEnabled"]
-            if "accessPolicy"       in final_conf: payload["accessPolicy"]       = final_conf["accessPolicy"]
 
-            # WAN special: only name & enabled allowed
+            if "name"               in override: payload["name"]               = override["name"]
+            if "enabled"            in override: payload["enabled"]            = override["enabled"]
+            if "type"               in override: payload["type"]               = override["type"]
+            if "vlan"               in override: payload["vlan"]               = override["vlan"]
+            if "allowedVlans"       in override and override.get("type") == "trunk":
+                payload["allowedVlans"] = override["allowedVlans"]
+            if "dropUntaggedTraffic" in override:
+                payload["dropUntaggedTraffic"] = override["dropUntaggedTraffic"]
+            if "poeEnabled"         in override: payload["poeEnabled"]         = override["poeEnabled"]
+            if "accessPolicy"       in override: payload["accessPolicy"]       = override["accessPolicy"]
+
             if payload.get("type") == "wan":
-                payload = {k: payload[k] for k in ("name","enabled") if k in payload}
+                payload = {k: payload[k] for k in ("name", "enabled") if k in payload}
 
             if not payload:
                 logger.warning(f"⚠️ No fields to set on port {port_number}; skipping.")
