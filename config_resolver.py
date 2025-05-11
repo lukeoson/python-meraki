@@ -4,6 +4,7 @@ import ipaddress
 import logging
 from copy import deepcopy
 from ipam.allocator import IPAMAllocator
+from utils.state.runtime import load_runtime_state
 
 CONFIG_DIR = "config"
 logger = logging.getLogger(__name__)
@@ -187,6 +188,71 @@ def resolve_firewall_rules(defaults, backend, project_overrides=None, resolved_v
         "outbound_rules": outbound,
         "inbound_rules": inbound
     }
+
+
+# 🔒 Resolve MX AutoVPN config from common + project-level overrides
+def resolve_mx_autovpn(backend, project_slug, network_slug, project_overrides, resolved_vlans, runtime):
+    logger = logging.getLogger(__name__)
+    result = {}
+
+    try:
+        common = backend.get_mx_autovpn_common()
+        project = backend.get_mx_autovpn_project(project_slug)
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to load AutoVPN config: {e}")
+        return {}
+
+    # Extract defaults
+    common_defaults = common.get("defaults", {})
+    project_defaults = project.get("defaults", {})
+
+    # Merge per-network config: common → project → final
+    merged_config = {}
+    common_net = common.get(network_slug, {})
+    project_net = project.get(network_slug, {})
+
+    merged_config = merge_dicts(common_defaults, common_net)
+    merged_config = merge_dicts(merged_config, project_defaults)
+    merged_config = merge_dicts(merged_config, project_net)
+
+    mode = merged_config.get("mode", "spoke").lower()
+    result["mode"] = mode
+
+    if mode == "hub":
+        return result  # no other fields needed
+
+    # Resolve hubSlug → hubId from runtime
+    hub_slug = merged_config.get("hub_slug")
+    try:
+        hub_id = runtime["projects"][project_slug]["networks"][hub_slug]["network_id"]
+        result["hubs"] = [{
+            "hubId": hub_id,
+            "useDefaultRoute": bool(merged_config.get("enable_default_route", False))
+        }]
+    except Exception as e:
+        logger.error(f"❌ Failed to resolve hubSlug '{hub_slug}' for project '{project_slug}': {e}")
+        return {}
+
+    # Match VLANs by name or ID
+    advertise_vlans = merged_config.get("advertise_vlans", [])
+    subnets = []
+    for vlan in resolved_vlans:
+        vlan_id = vlan.get("id")
+        vlan_name = vlan.get("name", "").upper()
+        if vlan_name in [str(x).upper() for x in advertise_vlans] or vlan_id in advertise_vlans:
+            subnets.append({
+                "localSubnet": vlan["subnet"],
+                "useVpn": True
+            })
+
+    result["subnets"] = subnets
+
+    # Global NAT toggle
+    if merged_config.get("enable_nat", False):
+        result["subnet"] = {"nat": {"isAllowed": True}}
+
+    return result
+
 # 📡 Resolve MX wireless config from common + project overrides
 def resolve_mx_wireless(defaults, backend, project_overrides=None):
     config = {"defaults": {}, "ssids": []}
@@ -299,6 +365,8 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
     base_vlans = vlans_backend.get_vlans().get("vlans", [])
     exclusions = exclusions_backend.get_exclusions()
 
+    runtime = load_runtime_state()
+
     # 🧯 Setup shared IPAM allocator
     ipam_cfg = defaults.get("ipam", {})
     ipam_supernet = ipam_cfg.get("supernet")
@@ -379,6 +447,14 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
             net_config["fixed_assignments"] = network_fixed_ips
             net_config["mx_ports"] = resolve_mx_ports(defaults, backend, net.get("config", {}))
             net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, net.get("config", {}))
+            net_config["mx_autovpn"] = resolve_mx_autovpn(
+                backend,
+                project_slug,
+                network_slug,
+                net.get("config", {}),
+                processed_vlans,
+                runtime=runtime
+            )
 
             resolved.append({
                 "project_name": project_name,

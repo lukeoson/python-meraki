@@ -24,6 +24,12 @@ class LocalYAMLBackend(BackendProvider):
 
     def get_mx_static_routes(self):
         return self._load_yaml("common/routes/mx_static.yaml")
+    
+    def get_mx_autovpn_common(self):
+        return self._load_yaml("common/vpn/mx_autovpn.yaml")
+
+    def get_mx_autovpn_project(self, project_name):
+        return self._load_yaml(f"projects/{project_name}/vpn/mx_autovpn.yaml")
 
     def get_fixed_assignments(self, project_name):
         return self._load_yaml(f"projects/{project_name}/fixed_ip_assignments.yaml")
