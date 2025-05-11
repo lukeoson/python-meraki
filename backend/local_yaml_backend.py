@@ -18,6 +18,12 @@ class LocalYAMLBackend(BackendProvider):
 
     def get_vlans(self):
         return self._load_yaml("common/vlans/mx_vlans.yaml")
+    
+    def get_mx_ports(self):
+        return self._load_yaml("common/ports/mx_ports.yaml")
+
+    def get_mx_ports_project(self, project_name):
+        return self._load_yaml(f"projects/{project_name}/ports/mx_ports.yaml")
 
     def get_firewall_rules(self):
         return self._load_yaml("common/firewall/mx_firewall.yaml")
@@ -46,5 +52,4 @@ class LocalYAMLBackend(BackendProvider):
     def get_mx_wireless(self):
         return self._load_yaml("common/wireless/mx_wireless.yaml")
     
-    def get_mx_ports(self):
-        return self._load_yaml("common/ports/mx_ports.yaml")
+

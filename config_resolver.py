@@ -35,34 +35,73 @@ def flatten_devices(grouped):
             result.append(d)
     return result
 
-def resolve_mx_ports(defaults, backend, project_overrides=None):
+def resolve_mx_ports(defaults, backend, project_overrides=None, network_slug=None):
+    from copy import deepcopy
+    logger.debug(f"[MX PORTS ENTRY] network_slug={network_slug}, project_overrides={project_overrides}")
     config = {"defaults": {}, "ports": []}
 
     if "mx_ports" in defaults:
         config["ports"] = defaults["mx_ports"]
+        logger.debug(f"[MX PORTS] Defaults loaded: {defaults.get('mx_ports', [])}")
 
     try:
         common_config = backend.get_mx_ports()  # ✅ Now uses the backend
         config["defaults"] = common_config.get("defaults", {})
         config["ports"] = common_config.get("ports", config["ports"])
+        logger.debug(f"[MX PORTS] Common config loaded: defaults={config['defaults']}, ports={config['ports']}")
     except Exception as e:
         logger.warning(f"⚠️ Failed to load common mx_ports: {e}")
 
+    # Check for project-level per-network overrides
     if project_overrides:
-        override_path = project_overrides.get("mx_ports")
-        if isinstance(override_path, str):
-            try:
-                full_path = os.path.join(CONFIG_DIR, override_path)
-                with open(full_path, "r") as f:
-                    override = yaml.safe_load(f)
-                    config["ports"] = override.get("ports", config["ports"])
-                    config["defaults"].update(override.get("defaults", {}))
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to load project mx_ports override from '{override_path}': {e}")
-        elif isinstance(override_path, dict):
-            config["ports"] = override_path.get("ports", config["ports"])
-            config["defaults"].update(override_path.get("defaults", {}))
+        mx_ports_override = project_overrides.get("mx_ports", {})
+        logger.debug(f"[MX PORTS] Raw override value: {mx_ports_override}")
+        logger.debug(f"[MX PORTS] Project-level override detected: {mx_ports_override}")
+        if isinstance(mx_ports_override, dict):
+            if not network_slug:
+                logger.warning(f"[MX PORTS] No network_slug provided for override resolution.")
+            elif network_slug in mx_ports_override:
+                net_override = mx_ports_override[network_slug]
+                logger.debug(f"[MX PORTS] Using project override for {network_slug}: {net_override}")
+                # Strict validation: require dict per network
+                if not isinstance(net_override, dict):
+                    logger.warning(f"[MX PORTS] Override for network_slug='{network_slug}' is not a dict; got {type(net_override).__name__}")
+                else:
+                    ports = net_override.get("ports", [])
+                    defaults_update = net_override.get("defaults", {})
+                    # Only override ports if present, else preserve base
+                    config["ports"] = ports if ports else config["ports"]
+                    # Use merge_dicts to extend defaults, not replace
+                    config["defaults"] = merge_dicts(config["defaults"], defaults_update)
+                    logger.debug(f"[MX PORTS] Applied override for '{network_slug}': ports={config['ports']}, defaults={config['defaults']}")
+            else:
+                logger.warning(f"[MX PORTS] Override provided but no entry found for network_slug='{network_slug}'")
+        else:
+            logger.warning(f"[MX PORTS] Expected dict for 'mx_ports', got {type(mx_ports_override).__name__}")
 
+    # Normalize portId/port and expand port ranges (single values and ranges)
+    logger.debug(f"[MX PORTS] Before expanding port ranges: {config['ports']}")
+    expanded_ports = []
+    for port_def in config["ports"]:
+        port_field = port_def.get("portId") or port_def.get("port")
+        if isinstance(port_field, str) and "-" in port_field:
+            try:
+                start, end = map(int, port_field.split("-"))
+                for p in range(start, end + 1):
+                    new_def = deepcopy(port_def)
+                    new_def["port"] = p
+                    new_def.pop("portId", None)  # remove original range
+                    expanded_ports.append(new_def)
+            except Exception as e:
+                logger.warning(f"⚠️ Invalid port range '{port_field}': {e}")
+        else:
+            new_def = deepcopy(port_def)
+            new_def["port"] = int(port_field) if port_field is not None else None
+            expanded_ports.append(new_def)
+    config["ports"] = expanded_ports
+    logger.debug(f"[MX PORTS] Expanded port list: {config['ports']}")
+
+    logger.debug(f"[MX PORTS] Final resolved ports: {config['ports']}, defaults: {config['defaults']}")
     return config
 
 # 📡 Resolve MX static routes config from common + project overrides
@@ -475,7 +514,38 @@ def resolve_project_configs(config_dir=CONFIG_DIR, backend=None):
             net_config["mx_static_routes"] = resolve_mx_static_routes(defaults, backend, net.get("config", {}), processed_vlans)["routes"]
             net_config["exclusions"] = exclusions
             net_config["fixed_assignments"] = network_fixed_ips
-            net_config["mx_ports"] = resolve_mx_ports(defaults, backend, net.get("config", {}))
+            logger.debug(f"[MX PORTS DEBUG] Calling resolve_mx_ports for network_slug={network_slug}")
+            logger.debug(f"[MX PORTS DEBUG] net['config'] contents: {net.get('config', {})}")
+            # 👇 Add project-level mx_ports override to config
+            mx_ports_override = project.get("mx_ports", {})
+            if mx_ports_override:
+                if "config" not in net:
+                    net["config"] = {}
+                net["config"]["mx_ports"] = mx_ports_override
+            # 🔍 Attempt to load project-level mx_ports override from file
+            project_ports_path = os.path.join(config_dir, f"projects/{project_slug}/ports/mx_ports.yaml")
+            if os.path.exists(project_ports_path):
+                try:
+                    with open(project_ports_path, "r") as f:
+                        loaded_ports_yaml = yaml.safe_load(f)
+                        if "config" not in net:
+                            net["config"] = {}
+                        net["config"]["mx_ports"] = loaded_ports_yaml.get("mx_ports", {})
+                        logger.info(f"[MX PORTS DEBUG] Loaded mx_ports override for {network_slug} from file")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to load mx_ports override from file: {e}")
+            resolved_mx_ports = resolve_mx_ports(defaults, backend, net.get("config", {}), network_slug)
+            mx_defaults = resolved_mx_ports.get("defaults", {})
+            mx_ports = resolved_mx_ports.get("ports", [])
+
+            # Merge defaults into each port
+            merged_ports = []
+            for port in mx_ports:
+                merged = merge_dicts(mx_defaults, port)
+                merged_ports.append(merged)
+
+            net_config["mx_ports"] = merged_ports
+            logger.debug(f"[MX PORTS DEBUG] resolved mx_ports: {net_config['mx_ports']}")
             net_config["mx_wireless"] = resolve_mx_wireless(defaults, backend, net.get("config", {}))
             # 🧠 Track runtime network ID mapping for AutoVPN resolution (now handled above)
             # runtime["projects"][project_slug]["networks"][network_slug] = {

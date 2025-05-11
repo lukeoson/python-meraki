@@ -1,0 +1,163 @@
+# config/projects/percy_street/ports/mx_ports.yaml
+#
+# 🔧 Project-Level MX Port Configuration
+#
+# Define per-network port configurations for MX devices.
+# Each network key (e.g., studio_hub) must match the slug used in the manifest.
+# Ports inherit from `defaults` unless explicitly overridden.
+#
+# Supports:
+# - Access and trunk port definitions
+# - WAN ports
+# - Per-port metadata for internal use (e.g., device-role)
+# - Port ranges using 'X-Y' syntax (e.g., '3-10'), which must be expanded in resolver logic
+
+defaults: &port_defaults
+  name: "LAN Port"             # Default logical name
+  enabled: true                # Ports are enabled by default
+  type: access                 # Access port unless overridden
+  vlan: MGMT                   # Default VLAN assignment
+  dropUntaggedTraffic: false   # Accept untagged traffic
+  poeEnabled: true             # Enable PoE by default
+  accessPolicy: Open           # Open access (no 802.1X by default)
+  # allowedVlans: "all"        # Only for trunk ports
+
+mx_ports:
+  studio_hub:
+    ports:
+      - portId: 1
+        name: "WAN 1 - Home Router"
+        type: wan
+        enabled: true
+
+      - portId: 2
+        name: "WAN 2 - MG Cellular"
+        type: wan
+        enabled: true
+
+      - portId: 3
+        <<: *port_defaults
+        device-role: Hue Hub
+        vlan: 30
+
+      - portId: 4
+        <<: *port_defaults
+        device-role: Unused
+        vlan: 20
+
+      - portId: 5
+        <<: *port_defaults
+        device-role: Unused
+        vlan: 20
+
+      - portId: 6
+        <<: *port_defaults
+        device-role: Unused
+        vlan: 20
+
+      #- portId: 6
+      #  <<: *port_defaults
+      #  device-role: Trunk Uplink
+      #  type: trunk
+      #  allowedVlans: "10,20,30,40,50,60,90"
+
+      - portId: 7
+        <<: *port_defaults
+        device-role: Transit to Spoke
+        vlan: 90
+
+      - portId: 8
+        <<: *port_defaults
+        device-role: Unused
+        vlan: 20
+
+      - portId: 9
+        <<: *port_defaults
+        device-role: Unused
+        vlan: 20
+
+      - portId: 10
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 11
+        <<: *port_defaults
+        device-role: Camera
+        vlan: 60
+        poeEnabled: true
+
+      - portId: 12
+        <<: *port_defaults
+        device-role: Camera
+        vlan: 60
+        poeEnabled: true
+
+  studio_spoke:
+    ports:
+      - portId: 1
+        name: "WAN 1"
+        type: wan
+        enabled: true
+
+      - portId: 2
+        name: "WAN 2"
+        type: wan
+        enabled: true
+
+      - portId: 3
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 3
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 4
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 5
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 6
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 7
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 8
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 9
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 10
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+
+      - portId: 11
+        <<: *port_defaults
+        device-role: Server
+        vlan: 20
+        poeEnabled: true
+
+      - portId: 12
+        <<: *port_defaults
+        device-role: Camera
+        vlan: 60
+        poeEnabled: true

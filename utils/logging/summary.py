@@ -56,8 +56,8 @@ def log_deployment_summary(config, org_name, named_devices, dashboard, summary_f
 
     # Ports
     summary_lines.append("    - 🔌 MX Ports:")
-    for port in config.get("mx_ports", {}).get("ports", []):
-        summary_lines.append(f"        • Port {port['portId']} → VLAN {port.get('vlan', 'N/A')} ({port['type']})")
+    for port in config.get("mx_ports", []):
+        summary_lines.append(f"        • Port {port.get('port') or port.get('portId')} → VLAN {port.get('vlan', 'N/A')} ({port.get('type', 'N/A')})")
 
     # VLANs
     summary_lines.append("    - 🌐 VLANs:")

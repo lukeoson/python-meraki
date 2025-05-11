@@ -12,7 +12,7 @@ def setup_logging(log_name: str = "python_meraki.log"):
     log_file_path = custom_log_dir / log_name
 
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s',
         handlers=[
             logging.FileHandler(log_file_path, mode='a'),
@@ -21,7 +21,7 @@ def setup_logging(log_name: str = "python_meraki.log"):
     )
 
     coloredlogs.install(
-        level=logging.INFO,
+        level=logging.DEBUG,
         fmt='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s',
         field_styles={
             'asctime': {'color': 'green'},

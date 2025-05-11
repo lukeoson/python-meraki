@@ -39,10 +39,15 @@ def setup_network(
         logger.info("🌐 Configuring MX VLANs...")
         configure_mx_vlans(dashboard, network_id, config)
 
-    # 2. Port Profiles (must come after VLANs)
-    if do_ports and config.get("mx_ports"):
+    # 2.1. Load MX Port Config for This Network
+    mx_ports = config.get("mx_ports")
+    logger.debug(f"[MX PORTS DEBUG] raw mx_ports config for network {network_id}: {mx_ports}")
+    if do_ports and mx_ports:
         logger.info("🔌 Configuring MX ports...")
-        configure_mx_ports(dashboard, network_id, config["mx_ports"])
+        configure_mx_ports(dashboard, network_id, mx_ports)
+        logger.debug(f"[MX PORTS DEBUG] MX port configuration applied for network {network_id}")
+    else:
+        logger.info("⚠️ No MX port configuration found, skipping.")
 
     # 3. Static Routes
     if do_static_routes and config.get("mx_static_routes"):
