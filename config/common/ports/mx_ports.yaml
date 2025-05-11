@@ -36,7 +36,7 @@ ports:
   - portId: 3
     <<: *port_defaults
     device-role: server   # Optional metadata for our own logic     
-    vlan: 90                  
+    vlan: 20                  
 
   - portId: 4
     <<: *port_defaults
@@ -56,7 +56,7 @@ ports:
   - portId: 7
     <<: *port_defaults
     device-role: server     
-    vlan: 20                  
+    vlan: 90                  
 
   - portId: 8
     <<: *port_defaults
