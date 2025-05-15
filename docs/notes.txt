@@ -53,16 +53,6 @@ groups:
       - serial: Q2HP-HVRF-RHG4
         type: MS
         model: MS220-8P
-        tags: [access-switch, vlan20-default, poe-capable]
-        location:
-          city: LON
-          building: Percy
-          room: Studio
-          floor: G
-        role: access
-        function: vlan20-endpoints
-        preferredProfile: "Workstation VLAN20"
-        defaultPortProfile: "Workstation VLAN20"
 
   - tag: percy-street-studio-spoke
     devices:
@@ -122,3 +112,6 @@ groups:
 #      - serial: Q2GV-YTTJ-AFC3
 #        type: MV
 #        model: MV12W
+
+---
+
