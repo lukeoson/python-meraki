@@ -49,6 +49,10 @@ groups:
       - serial: Q3CC-BEXL-HEFG
         type: MT
         model: MT20
+      #TODO: Add MS module 
+      - serial: Q2HP-HVRF-RHG4
+        type: MS
+        model: MS220-8P
 
   - tag: percy-street-studio-spoke
     devices:
