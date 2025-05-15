@@ -38,7 +38,7 @@ mx_ports:
       - portId: 3
         <<: *port_defaults
         device-role: Hue Hub
-        vlan: 30
+        vlan: 20
 
       - portId: 4
         <<: *port_defaults
