@@ -1,0 +1,43 @@
+# config/projects/percy_street/switching/staged_upgrades.yaml
+#
+# 🔁 Project-specific firmware upgrade groups and rollout sequence.
+# Overrides or extends common config for specific networks.
+
+stagedUpgrades:
+  studio_hub:
+    groups:
+      - name: "Access"
+        description: "Hub access switches"
+        isDefault: false
+        devices:
+          - tag: access-switch
+        switchStacks: []
+
+      - name: "Default"
+        description: "Default fallback group"
+        isDefault: true
+        devices: []
+        switchStacks: []
+
+    rolloutOrder:
+      - name: "Access"
+      - name: "Default"
+
+  studio_spoke:
+    groups:
+      - name: "Access"
+        description: "Hub access switches"
+        isDefault: false
+        devices:
+          - tag: access-switch
+        switchStacks: []
+
+      - name: "Default"
+        description: "Default fallback group"
+        isDefault: true
+        devices: []
+        switchStacks: []
+
+    rolloutOrder:
+      - name: "Access"
+      - name: "Default"

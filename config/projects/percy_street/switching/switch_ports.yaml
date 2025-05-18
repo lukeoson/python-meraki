@@ -1,0 +1,57 @@
+# config/projects/percy_street/switching/switch_ports.yaml
+#
+# 🧩 Per-project MS switch port configuration using profiles
+# Supports:
+# - serial or tag/match targeting
+# - per-port assignment using reusable port profiles
+# - role-based dynamic port allocation using {n} substitution
+# - profile reuse via YAML anchors
+
+switch_ports:
+  studio_hub:
+    # 🧱 Default profile to apply where unspecified
+    defaults: &default_ports
+      portProfile: "Internal"
+
+    switches:
+      # 🎯 Match by serial: overrides everything else for this exact switch
+      - serial: Q2HP-HVRF-RHG4
+        ports:
+          - portId: "1-8"
+            <<: *default_ports
+          - portId: "9-10"
+            portProfile: "Trunk Uplink"
+
+      # 🧠 Match by model + index: targets the first MS220-8P found (index = 1)
+      - match:
+          model: MS220-8P
+          index: 1
+        ports:
+          - portId: "1-6"
+            <<: *default_ports
+          - portId: "7-8"
+            portProfile: "Security"
+          - portId: "9-10"
+            portProfile: "Trunk Uplink"
+
+    # 🏷️ Match by tag: fallback for switches tagged 'access-switch'
+    match:
+      - tag: access-switch
+        portBlocks:
+          # 🔗 Apply Uplink profile to SFP-capable ports automatically
+          #    This is resolved dynamically at runtime by inspecting switch metadata for SFP ports
+          - role: trunk-uplink
+            uplink: true
+            portProfile: "Trunk Uplink"
+
+          # 📊 Allocate 75% of access ports to Internal profile
+          #    Percentage-based allocation resolved at runtime based on total access ports available
+          - role: internal
+            percent: 75
+            portProfile: "Internal"
+
+          # 📊 Allocate 25% of access ports to Security profile
+          #    Percentage-based allocation resolved at runtime based on total access ports available
+          - role: security
+            percent: 25
+            portProfile: "Security"

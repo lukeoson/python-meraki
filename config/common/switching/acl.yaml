@@ -1,0 +1,31 @@
+
+
+# config/common/switching/acl.yaml
+#
+# 🛡️ Defines Layer 2 Access Control Lists (ACLs) for Meraki switches.
+# These correspond to the Meraki dashboard: Switch > ACL
+#
+# ACLs are evaluated top-down; the first match applies.
+# Instead of hardcoding subnets, use `srcRole` and `dstRole`
+# which will be resolved to IP subnets via runtime IPAM data.
+
+acls:
+  - comment: "Deny Guest to Internal VLAN traffic"
+    policy: deny                 # Required: 'allow' or 'deny'
+    ipVersion: ipv4              # Optional: 'any', 'ipv4', or 'ipv6'
+    protocol: any                # Required: 'any', 'tcp', 'udp', 'icmp'
+    srcRole: guest               # Custom abstraction; resolved to srcCidr via runtime.json
+    dstRole: internal            # Custom abstraction; resolved to dstCidr via runtime.json
+    srcPort: any                 # Optional: source port number or 'any'
+    dstPort: any                 # Optional: destination port number or 'any'
+    vlan: any                    # Optional: VLAN ID or 'any'
+
+  - comment: "Allow all other inbound traffic"
+    policy: allow
+    ipVersion: ipv4
+    protocol: any
+    srcCidr: any
+    dstCidr: any
+    srcPort: any
+    dstPort: any
+    vlan: any

@@ -61,30 +61,49 @@ def generate_device_names(devices, naming_config):
     Sequence is per device type (e.g., MX-01, MX-02).
     """
 
-    # 🔒 Runtime check to fail early if naming fields are missing
-    required_keys = ["city", "building", "room", "function"]
-    missing = [k for k in required_keys if k not in naming_config]
-    if missing:
-        raise KeyError(f"❌ Missing naming fields: {', '.join(missing)}")
+    def matches_rule(device, rule):
+        match = rule.get("match", {})
+        if "type" in match and match["type"].upper() != device["type"].upper():
+            return False
+        if "tags" in match:
+            device_tags = set(device.get("tags", []))
+            required_tags = set(match["tags"])
+            if not required_tags.issubset(device_tags):
+                return False
+        return True
+
+    rules = naming_config.get("rules", [])
+    defaults = naming_config.get("defaults", {})
 
     type_counters = {}
     named_devices = []
 
     for device in devices:
-        device_type = device["type"].upper()  # Ensure the type is uppercase
+        device_type = device["type"].upper()
         type_counters[device_type] = type_counters.get(device_type, 0) + 1
-        seq = f"{type_counters[device_type]:02d}"  # Generate a sequence number with two digits
+        seq = f"{type_counters[device_type]:02d}"
 
-        name_parts = [
-            naming_config["city"],
-            naming_config["building"],
-            naming_config["room"],
-            naming_config["function"],
-            device_type,  # Device type (MX, MG, etc.)
-            seq  # Sequence number
-        ]
+        matched_rule = next((r for r in rules if matches_rule(device, r)), {})
 
-        device_name = "-".join(name_parts).upper()  # Convert the full name to uppercase
+        def resolve_key(key):
+            return (
+                matched_rule.get(key) or
+                device.get("location", {}).get(key) or
+                defaults.get(key) or
+                naming_config.get(key)
+            )
+
+        city = resolve_key("city")
+        building = resolve_key("building")
+        room = resolve_key("room")
+        function = resolve_key("function")
+
+        if not all([city, building, room, function]):
+            raise ValueError(f"❌ Missing naming value for device {device['serial']} — resolved as: "
+                             f"city={city}, building={building}, room={room}, function={function}")
+
+        name_parts = [city, building, room, function, device_type, seq]
+        device_name = "-".join(name_parts).upper()
         named_devices.append({"serial": device["serial"], "name": device_name})
 
     return named_devices
@@ -99,4 +118,3 @@ def set_device_names(dashboard, network_id, named_devices):
             device["serial"],
             name=device["name"]
         )
-

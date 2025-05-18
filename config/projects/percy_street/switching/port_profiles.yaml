@@ -1,0 +1,48 @@
+# config/projects/percy_street/switching/port_profiles.yaml
+#
+# 🧱 Project-level MS port profile overrides and additions
+# Profiles defined here override or extend those in common/switching/port_profiles.yaml
+# 
+# Structure:
+# - `common:` → global overrides (applied to all networks in this project)
+# - `<network_name>:` → overrides or additions scoped to a specific network
+
+portProfiles:
+  # 🔁 Overrides applied to all networks in the project (optional)
+  common:
+    # Example override:
+    # Internal:
+    #   vlan: 110
+
+  # 🎯 Network-specific profiles (applies only to the named network)
+  studio_hub:
+    Contractor VLAN:
+      type: access
+      vlan: 88
+      poeEnabled: false
+      accessPolicy: Guest
+      voiceVlan: null
+      isolationEnabled: true
+      rstpEnabled: true
+      stpGuard: none
+      linkNegotiation: Auto negotiate
+      portSchedule: null
+      udld: alert
+      stormControlEnabled: false
+      stickyMacAllowList: []
+
+  studio_spoke:
+    Camera VLAN:
+      type: access
+      vlan: 99
+      poeEnabled: true
+      accessPolicy: Camera
+      voiceVlan: 99
+      isolationEnabled: true
+      rstpEnabled: true
+      stpGuard: bpdu guard
+      linkNegotiation: Auto negotiate
+      portSchedule: null
+      udld: alert
+      stormControlEnabled: true
+      stickyMacAllowList: []

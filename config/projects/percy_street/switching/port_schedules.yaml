@@ -1,0 +1,71 @@
+# config/projects/percy_street/switching/port_schedules.yaml
+#
+# ⏰ Project-level MS port schedule definitions.
+# These override or extend common port schedules on a per-project or per-network basis.
+#
+# Structure:
+# - `common:` → applies across all networks in this project
+# - `<network_name>:` → overrides or adds schedules for that specific network only
+
+portSchedules:
+  project_wide:
+    # 🔁 Default 24/7 schedule template
+    always_on: &always_on
+      monday:
+        - start: "00:00"
+          end: "23:59"
+      tuesday:
+        - start: "00:00"
+          end: "23:59"
+      wednesday:
+        - start: "00:00"
+          end: "23:59"
+      thursday:
+        - start: "00:00"
+          end: "23:59"
+      friday:
+        - start: "00:00"
+          end: "23:59"
+      saturday:
+        - start: "00:00"
+          end: "23:59"
+      sunday:
+        - start: "00:00"
+          end: "23:59"
+    # 🔁 Default 8am to 6pm monday to friday schedule template
+    business_hours: &business_hours
+      monday:
+        - start: "08:00"
+          end: "18:00"
+      tuesday:
+        - start: "08:00"
+          end: "18:00"
+      wednesday:
+        - start: "08:00"
+          end: "18:00"
+      thursday:
+        - start: "08:00"
+          end: "18:00"
+      friday:
+        - start: "08:00"
+          end: "18:00"
+      saturday:
+        - start: "00:00"
+          end: "00:00"
+      sunday:
+        - start: "00:00"
+          end: "00:00"
+    
+    Always On:
+      <<: *always_on
+
+    Business Hours:
+      <<: *business_hours
+
+  studio_hub:
+    Always On:
+      <<: *always_on
+
+  studio_lab:
+    Business Hours:
+      <<: *business_hours

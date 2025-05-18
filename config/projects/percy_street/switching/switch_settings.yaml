@@ -1,0 +1,52 @@
+
+
+# config/projects/percy_street/switching/switch_settings.yaml
+#
+# ⚙️ Project-level switch behavior configuration for Meraki networks.
+# Overrides or extends common settings on a per-network basis.
+
+switchSettings:
+  studio_hub:
+    vlan: 1  # Management VLAN
+
+    useCombinedPower: false
+
+    macBlocklist:
+      enabled: false
+
+    uplinkClientSampling:
+      enabled: true
+
+    powerExceptions:
+      - match:
+          tag: access-switch
+        powerType: useNetworkSetting
+
+    # ----------------------------------------------------------------------
+    # 🧱 Additional switch settings grouped by their respective API endpoints
+    # ----------------------------------------------------------------------
+
+    mtu:
+      defaultMtuSize: 9578
+      overrides:
+        - mtuSize: 1500
+          match:
+            tag: access-switch
+          switchProfiles: []
+
+    qosRules:
+      - name: "Voice"
+        vlan: 20
+        protocol: "udp"
+        srcPortRange: "10000-20000"
+        dstPortRange: "10000-20000"
+        dscp: 46
+
+    stp:
+      rstpEnabled: true
+      stpBridgePriority:
+        - stpPriority: 4096
+          match:
+            tag: core-switch
+          switchProfiles: []
+          stacks: []

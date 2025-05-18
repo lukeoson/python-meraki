@@ -32,8 +32,48 @@ ipam:
     - 10.16.0.0/15  # 10.16.0.0 → 10.17.255.255
 
 naming:
-  city: lon
+  # 📛 Device Naming Template
+  # This defines how device names are generated. Each placeholder must match a key resolved from either:
+  # 1. A matched rule (based on type + tags)
+  # 2. The device’s location (from devices.yaml)
+  # 3. These local naming defaults
+  # 4. Legacy top-level naming keys (e.g., naming.city)
+
   template: "{city}-{building}-{room}-{function}-{type}"
+
+  # 🧱 Default values if not overridden in rules or device metadata
+  defaults:
+    city: LON
+    building: Percy
+    room: Studio
+
+  # 🧠 Rule-based overrides based on device type and tags
+  # These let you assign more specific function names or naming values per device role
+  rules:
+    - match:
+        type: MS
+        tags: [access-switch]
+      function: access
+
+    - match:
+        type: MS
+        tags: [core-switch]
+      function: aggregation
+
+    - match:
+        type: MS
+        tags: [edge-switch]
+      function: edge
+
+    - match:
+        type: MX
+        tags: [hub-vpn]
+      function: hub
+
+    - match:
+        type: MX
+        tags: [spoke-vpn]
+      function: spoke
 
 organization:
   tags: [python-sdk]
@@ -48,3 +88,6 @@ network:
 management_vlan:
   name: MGMT
   id: 10
+
+fallbacks:
+  ms_port_profile: "Internal" # Default port profile for MS switches

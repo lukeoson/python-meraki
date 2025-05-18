@@ -1,0 +1,64 @@
+# config/common/ports/ms_port_profiles.yaml
+#
+# 🧱 Reusable Meraki MS port profile definitions
+# These profiles can be referenced in ms_ports.yaml via `portProfile`
+
+portProfiles:
+  Trunk Uplink:
+    type: trunk
+    vlan: 1
+    allowedVlans: "1,10,20,30,60"
+    poeEnabled: false
+    isolationEnabled: false
+    rstpEnabled: true
+    stpGuard: root guard
+    linkNegotiation: Auto negotiate
+    portSchedule: null
+    udld: alert
+    stormControlEnabled: false
+    stickyMacAllowList: []
+
+  Internal:
+    type: access
+    vlan: 20
+    poeEnabled: true
+    accessPolicy: Open
+    voiceVlan: null
+    isolationEnabled: false
+    rstpEnabled: true
+    stpGuard: none
+    linkNegotiation: Auto negotiate
+    portSchedule: null
+    udld: alert
+    stormControlEnabled: false
+    stickyMacAllowList: []
+
+  IoT:
+    type: access
+    vlan: 30
+    poeEnabled: false
+    accessPolicy: Employee
+    voiceVlan: null
+    isolationEnabled: false
+    rstpEnabled: true
+    stpGuard: none
+    linkNegotiation: Auto negotiate
+    portSchedule: null
+    udld: alert
+    stormControlEnabled: false
+    stickyMacAllowList: []
+
+  Security:
+    type: access
+    vlan: 60
+    poeEnabled: true
+    voiceVlan: 60
+    isolationEnabled: true
+    accessPolicy: Guest
+    rstpEnabled: true
+    stpGuard: bpdu guard
+    linkNegotiation: Auto negotiate
+    portSchedule: null
+    udld: alert
+    stormControlEnabled: true
+    stickyMacAllowList: []

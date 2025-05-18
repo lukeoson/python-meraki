@@ -1,0 +1,55 @@
+# config/common/switching/switch_settings.yaml
+#
+# ⚙️ Global switch behavior configuration for Meraki networks.
+# Corresponds to: /networks/{networkId}/switch/settings
+#
+# MTU, QoS, and STP settings are handled by separate APIs and config files.
+
+switchSettings:
+  vlan: 1  # Management VLAN
+
+  useCombinedPower: false  # Default behavior for secondary power supply on supported models
+
+  macBlocklist:
+    enabled: false  # Globally enable MAC blocklisting
+
+  uplinkClientSampling:
+    enabled: true   # Enable telemetry sampling for uplink clients
+
+  # Optional per-switch override for power supply behavior
+  powerExceptions:
+    - serial: Q2XX-1234-ABCD
+      powerType: useNetworkSetting  # Options: combined, redundant, useNetworkSetting
+
+
+# ----------------------------------------------------------------------
+# 🧱 Additional switch settings grouped by their respective API endpoints
+# ----------------------------------------------------------------------
+
+# /networks/{networkId}/switch/mtu
+mtu:
+  defaultMtuSize: 9578
+  overrides:
+    - mtuSize: 1500
+      match:
+        tag: access-switch
+      switchProfiles: []
+
+# /networks/{networkId}/switch/qosRules
+qosRules:
+  - name: "Voice"
+    vlan: 20
+    protocol: "udp"
+    srcPortRange: "10000-20000"
+    dstPortRange: "10000-20000"
+    dscp: 46
+
+# /networks/{networkId}/switch/stp
+stp:
+  rstpEnabled: true
+  stpBridgePriority:
+    - stpPriority: 4096
+      match:
+        tag: core-switch
+      switchProfiles: []
+      stacks: []

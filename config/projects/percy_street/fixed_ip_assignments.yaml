@@ -15,118 +15,133 @@ defaults: &vlan_defaults
   Internal: &internal_defaults
     tags: [Internal, static]
   IoT: &iot_defaults
-    tags: [iot, static]
+    tags: [IoT, static]
 
 # 📡 Static IP Assignments per network
 studio_hub:
   Internal:
-    'AE:FE:0A:01:73:EE':
+    #Apple Mobile Devices
+    '7a:75:ce:d5:f2:40':
       offset: 20
       name: Apple M2 Max
       <<: *internal_defaults
 
-    '9C:E6:5E:C2:B3:EC':
+    '9a:ac:a1:bc:c9:38':
       offset: 21
       name: Apple iPad Pro 12.9
       <<: *internal_defaults
 
-    '2c:cf:67:27:03:b5':
-      offset: 30
-      name: Pi5 PoE Hat Arch Linux
+    '2e:73:cb:0b:4f:7f':
+      offset: 22
+      name: Apple iPhone 15 Pro Max
+      <<: *internal_defaults
+
+    'fa:00:25:57:47:10':
+      offset: 23
+      name: Apple Watch Ultra
+      <<: *internal_defaults
+
+    'f6:14:32:b2:3f:95':
+      offset: 24
+      name: Apple Watch Series 7
       <<: *internal_defaults
 
     '2c:cf:67:27:21:f0':
+      offset: 30
+      name: Pi5 PoE Hat 01 Kali Linux
+      <<: *internal_defaults
+
+    '2c:cf:67:27:03:b5':
       offset: 31
-      name: Pi5 PoE Hat Red
+      name: Pi5 PoE Hat 02 Arch Linux
       <<: *internal_defaults
 
-  IoT:
-  #Apple Home Devices
-    'A8:51:AB:A1:95:BE':
-      offset: 11
-      name: Desk Apple TV 
-      <<: *iot_defaults
-
-    '34:FD:6A:29:B1:F2':
-      offset: 12
-      name: Mantle Apple TV
-      <<: *iot_defaults
-
-    'AC:BC:B5:D9:2A:65':
-      offset: 13
-      name: Apple HomePod White
-      <<: *iot_defaults
-
-    'AC:BC:B5:DC:F6:45':
-      offset: 14
-      name: Apple HomePod Black
-      <<: *iot_defaults
-
-    '4C:20:B8:DD:89:E1':
-      offset: 15
-      name: Apple HomePod Mini White
-      <<: *iot_defaults
-
-    '58:D3:49:1A:FB:CD':
-      offset: 16
-      name: Apple HomePod Mini Black 01
-      <<: *iot_defaults
-
-    'F4:43:F0:06:6D:CB':
-      offset: 17
-      name: Apple HomePod Mini Black 02
-      <<: *iot_defaults
-    
-  #Philips Hue Devices
-    'EC:B5:FA:85:A3:35':
-      offset: 18
-      name: Pillips Hue Hub
-      <<: *iot_defaults
-
-  #Meross Power & Thermostat Devices
-    '48:E1:E9:B1:F6:4B':
-      offset: 19
-      name: Cabinet PDU L01
-      <<: *iot_defaults
-
-    '48:E1:E9:B1:F7:B8':
-      offset: 20
-      name: Cabinet PDU L01
-      <<: *iot_defaults
-    
-    '48:E1:E9:B1:FB:E6':
-      offset: 21
-      name: Cabinet PDU R02
-      <<: *iot_defaults
-    
-    '48:E1:E9:B1:FA:5A':
-      offset: 22
-      name: Cabinet PDU M03
-      <<: *iot_defaults
-
-    '48:E1:E9:9C:EA:89':
-      offset: 23
-      name: Thermostat
-      <<: *iot_defaults
-
-studio_spoke:
-  Internal:
     '2c:cf:67:27:01:b1':
-      offset: 20
-      name: Pi5 01 Ubuntu Linux
-      <<: *internal_defaults
-    '2c:cf:67:27:18:65':
-      offset: 21
-      name: Pi5 02 Ubuntu Linux
-      <<: *internal_defaults
-    'd8:3a:dd:f4:2d:a7':
-      offset: 22
+      offset: 32
       name: Pi5 03 Ubuntu Linux
       <<: *internal_defaults
 
-  IoT:
+    '2c:cf:67:27:18:65':
+      offset: 33
+      name: Pi5 04 Ubuntu Linux
+      <<: *internal_defaults
+
+    #Apple Home Devices
+    'a8:51:ab:a1:95:be':
+      offset: 40
+      name: Desk Apple TV 
+      <<: *internal_defaults
+
+    '34:fd:6a:29:b1:f2':
+      offset: 41
+      name: Mantle Apple TV
+      <<: *internal_defaults
+
+    'ac:bc:b5:d9:2a:65':
+      offset: 42
+      name: Apple HomePod White
+      <<: *internal_defaults
+
+    'ac:bc:b5:dc:f6:45':
+      offset: 43
+      name: Apple HomePod Black
+      <<: *internal_defaults
+
+    '4c:20:b8:dd:89:e1':
+      offset: 44
+      name: Apple HomePod Mini White
+      <<: *internal_defaults
+
+    '58:d3:49:1a:fb:cd':
+      offset: 45
+      name: Apple HomePod Mini Black 01
+      <<: *internal_defaults
+
+    'f4:34:f0:06:6d:cb':
+      offset: 46
+      name: Apple HomePod Mini Black 02
+      <<: *internal_defaults
+    
   #Philips Hue Devices
-    'EC:B5:FA:85:A3:35':
-      offset: 23
-      name: Hue Hub (Placeholder)
-      <<: *iot_defaults
+    'ec:b5:fa:85:a3:35':
+      offset: 50
+      name: Pillips Hue Hub
+      <<: *internal_defaults
+
+  #Meross Power & Thermostat Devices
+    '48:E1:E9:B1:F6:4B':
+      offset: 60
+      name: Cabinet PDU L01
+      <<: *internal_defaults
+
+    '48:E1:E9:B1:F7:B8':
+      offset: 61
+      name: Cabinet PDU L01
+      <<: *internal_defaults
+    
+    '48:E1:E9:B1:FB:E6':
+      offset: 62
+      name: Cabinet PDU R02
+      <<: *internal_defaults
+    
+    '48:E1:E9:B1:FA:5A':
+      offset: 63
+      name: Cabinet PDU M03
+      <<: *internal_defaults
+
+    '48:E1:E9:9C:EA:89':
+      offset: 64
+      name: Thermostat
+      <<: *internal_defaults
+
+studio_spoke:
+  Internal:   
+    'd8:3a:dd:f4:2d:a7':
+      offset: 32
+      name: Pi5 05 Ubuntu Linux
+      <<: *internal_defaults
+    
+    '34:fd:6a:29:b1:f2':
+      offset: 40
+      name: Cabinet Apple TV
+      <<: *internal_defaults

@@ -1,0 +1,33 @@
+# config/common/switching/access_policies.yaml
+#
+# 🧷 Defines port access policies used by MS port profiles.
+# These policies correspond to Meraki dashboard options under:
+# Switch > Access Policies
+#
+# Supported methods:
+# - Meraki Authentication (requires users.yaml)
+# - 802.1X RADIUS
+# - Splash Page
+# - Open access
+
+accessPolicies:
+  Guest:
+    authenticationMethod: Splash Page
+    splashPage: enabled
+    guestVlan: 40
+
+  Corporate:
+    authenticationMethod: 802.1X
+    radiusServers:
+      - ip: 10.0.0.5
+        port: 1812
+        secret: radius-secret
+      - ip: 10.0.0.6
+        port: 1812
+        secret: radius-secret
+    guestVlan: 40
+
+  MerakiAuth:
+    authenticationMethod: Meraki Authentication
+    userGroup: StudioUsers
+    guestVlan: 40
