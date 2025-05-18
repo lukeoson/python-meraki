@@ -1,0 +1,18 @@
+# config/common/network_wide/users.yaml
+#
+# 👥 Defines user accounts for Meraki Authentication.
+# These users are referenced by access policies under a named userGroup.
+
+userGroups:
+  defaults:
+    - email: lukeoson@gmail.com
+      name: Luke Richardson
+      authorized: true              # ✅ Must be true for user to be active
+      generatePassword: true        # 🔐 Password will be auto-generated
+      forcePasswordReset: true      # 🔁 Require user to reset at first login
+
+    - email: spanboogled@gmail.com
+      name: Span Boogled
+      authorized: true
+      generatePassword: true
+      forcePasswordReset: true

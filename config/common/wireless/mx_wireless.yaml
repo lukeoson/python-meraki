@@ -38,3 +38,10 @@ ssids:
     psk: "Lukeoson-Guest"
     defaultVlanId: 40
     <<: *ssid_defaults
+
+  - number: 4
+    name: "Lukeoson-Security"
+    authMode: "psk"
+    psk: "Lukeoson-Security"
+    defaultVlanId: 40
+    <<: *ssid_defaults

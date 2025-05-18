@@ -1,0 +1,18 @@
+# config/projects/percy_street/network_wide/users.yaml
+#
+# 👥 Defines user accounts for Meraki Authentication.
+# These users are referenced by access policies under a named userGroup.
+
+userGroups:
+  StudioUsers:
+    - email: alice@example.com
+      name: Alice Smith
+      authorized: true              # ✅ Must be true for user to be active
+      generatePassword: true        # 🔐 Password will be auto-generated
+      forcePasswordReset: true      # 🔁 Require user to reset at first login
+
+    - email: bob@example.com
+      name: Bob Jones
+      authorized: true
+      generatePassword: true
+      forcePasswordReset: true

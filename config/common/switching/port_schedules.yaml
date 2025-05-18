@@ -1,0 +1,83 @@
+# config/common/switching/port_schedules.yaml
+#
+# ⏰ Defines reusable time-based port schedules.
+# These correspond to the Meraki dashboard's Switch > Port Schedules section.
+#
+# Schedules can be applied to switch ports via port profiles.
+
+portSchedules:
+  # 🔁 Default 24/7 schedule template
+  always_on: &always_on
+    monday:
+      - start: "00:00"
+        end: "23:59"
+    tuesday:
+      - start: "00:00"
+        end: "23:59"
+    wednesday:
+      - start: "00:00"
+        end: "23:59"
+    thursday:
+      - start: "00:00"
+        end: "23:59"
+    friday:
+      - start: "00:00"
+        end: "23:59"
+    saturday:
+      - start: "00:00"
+        end: "23:59"
+    sunday:
+      - start: "00:00"
+        end: "23:59"
+  # 🔁 Default 8am to 6pm monday to friday schedule template
+  business_hours: &business_hours
+    monday:
+      - start: "08:00"
+        end: "18:00"
+    tuesday:
+      - start: "08:00"
+        end: "18:00"
+    wednesday:
+      - start: "08:00"
+        end: "18:00"
+    thursday:
+      - start: "08:00"
+        end: "18:00"
+    friday:
+      - start: "08:00"
+        end: "18:00"
+    saturday:
+      - start: "00:00"
+        end: "00:00"
+    sunday:
+      - start: "00:00"
+        end: "00:00"
+
+  Always On:
+    <<: *always_on
+
+  Business Hours:
+    <<: *business_hours
+
+  Guest Hours:
+    monday:
+      - start: "09:00"
+        end: "17:00"
+    tuesday:
+      - start: "09:00"
+        end: "17:00"
+    wednesday:
+      - start: "09:00"
+        end: "17:00"
+    thursday:
+      - start: "09:00"
+        end: "17:00"
+    friday:
+      - start: "09:00"
+        end: "17:00"
+    saturday:
+      - start: "10:00"
+        end: "14:00"
+    sunday:
+      - start: "10:00"
+        end: "14:00"

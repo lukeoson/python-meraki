@@ -1,0 +1,36 @@
+
+
+# config/common/switching/switch_ports.yaml
+#
+# 📦 Org-wide MS switch port configuration
+# Uses Meraki-style port ID range syntax for reduced duplication
+# Values here apply to all matching models unless overridden in project-level config
+
+switch_ports:
+  defaults: &default_access
+    portProfile: "Internal"
+
+  models:
+    MS220-8P:
+      portGroups:
+        - portIds: "1-8"
+          <<: *default_access
+        - portIds: "9-10"
+          portProfile: "Trunk Uplink"
+
+    MS210-48:
+      portGroups:
+        - portIds: "1"
+          portProfile: "Trunk Uplink"
+        - portIds: "2-46"
+          <<: *default_access
+        - portIds: "47-48"
+          portProfile: "Isolated VLAN30"
+
+  match:
+    - tag: access-switch
+      portGroups:
+        - portIds: "1"
+          portProfile: "Trunk Uplink"
+        - portIds: "2-8"
+          <<: *default_access
