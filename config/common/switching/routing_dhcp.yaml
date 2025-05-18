@@ -1,0 +1,27 @@
+# config/common/switching/routing_dhcp.yaml
+#
+# 🌐 Routing and DHCP config for Meraki switches.
+# This version is scoped to L2-only switches like the MS220-8P,
+# which only support DHCP relay and IGMP snooping querier.
+#
+# Future L3 features (SVI, OSPF, static routes) will be added later.
+
+routingDhcp:
+  # 👇 Global IGMP Querier setting (optional per-VLAN override supported in future)
+  igmpSnoopingQuerier:
+    enabled: false
+    interfaceIp: null  # Optional querier IP for L3-capable models only
+
+  # 👇 Per-VLAN DHCP relay configuration for L2-only switches
+  dhcpRelay:
+    - vlanId: 30
+      name: "Guest VLAN"
+      enabled: true
+      servers:
+        - 192.168.1.5
+        - 192.168.1.6
+
+    - vlanId: 50
+      name: "IoT VLAN"
+      enabled: false
+      servers: []

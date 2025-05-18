@@ -1,0 +1,22 @@
+# config/projects/percy_street/switching/routing_dhcp.yaml
+#
+# 🌐 Project-level DHCP relay configuration for MS switches.
+# Overrides or extends the common-level config.
+# Supports per-VLAN relay control for L2-only switches (e.g. MS220-8P).
+
+routingDhcp:
+  studio_hub:
+    dhcpRelay:
+      - vlanId: 30
+        name: "Guest VLAN"
+        enabled: true
+        servers:
+          - 192.168.1.10
+          - 192.168.1.11
+
+  studio_spoke:
+    dhcpRelay:
+      - vlanId: 40
+        name: "Lab VLAN"
+        enabled: false
+        servers: []

@@ -1,0 +1,52 @@
+# config/projects/percy_street/switching/acl.yaml
+#
+# 🛡️ Project-specific Layer 2 Access Control Lists for Meraki switches.
+# These override or extend the common ACLs for this project.
+#
+# Structure:
+# - Top-level keys are network slugs (e.g., studio_hub, studio_lab)
+# - Each network can define its own list of ACL rules
+# - Roles (e.g., guest, iot) will be resolved via runtime.json
+
+acls:
+  studio_hub:
+    - comment: "Block access from Guest to Security VLAN"
+      policy: deny
+      ipVersion: ipv4
+      protocol: any
+      srcRole: guest
+      dstRole: security
+      srcPort: any
+      dstPort: any
+      vlan: any
+
+    - comment: "Allow all other traffic"
+      policy: allow
+      ipVersion: ipv4
+      protocol: any
+      srcCidr: any
+      dstCidr: any
+      srcPort: any
+      dstPort: any
+      vlan: any
+
+  studio_spoke:
+    - comment: "Block access from Guest to Security VLAN"
+      policy: deny
+      ipVersion: ipv4
+      protocol: any
+      srcRole: guest
+      dstRole: security
+      srcPort: any
+      dstPort: any
+      vlan: any
+
+    - comment: "Allow all other traffic"
+      policy: allow
+      ipVersion: ipv4
+      protocol: any
+      srcCidr: any
+      dstCidr: any
+      srcPort: any
+      dstPort: any
+      vlan: any

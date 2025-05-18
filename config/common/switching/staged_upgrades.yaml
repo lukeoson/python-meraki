@@ -1,0 +1,33 @@
+# config/common/switching/staged_upgrades.yaml
+#
+# 🔁 Defines firmware upgrade groups and rollout sequence.
+# Designed for automation and future Jinja2 templating.
+#
+# Devices and switchStacks are NOT hardcoded — tagged references should be resolved at runtime.
+
+stagedUpgrades:
+  groups:
+    - name: "Core"
+      description: "Core switches"
+      isDefault: false
+      devices:
+        - tag: core-switch  # resolve all devices with this tag
+      switchStacks: []
+
+    - name: "Access"
+      description: "Access switches"
+      isDefault: false
+      devices:
+        - tag: access-switch
+      switchStacks: []
+
+    - name: "Default"
+      description: "Fallback group for untagged switches"
+      isDefault: true
+      devices: []
+      switchStacks: []
+
+  rolloutOrder:
+    - name: "Core"
+    - name: "Access"
+    - name: "Default"

@@ -31,7 +31,7 @@ portProfiles:
       stormControlEnabled: false
       stickyMacAllowList: []
 
-  studio_lab:
+  studio_spoke:
     Camera VLAN:
       type: access
       vlan: 99
